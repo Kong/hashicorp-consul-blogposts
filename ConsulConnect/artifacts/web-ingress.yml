@@ -1,0 +1,15 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: web
+  namespace: default
+  annotations:
+    konghq.com/strip-path: "true"
+spec:
+  rules:
+  - http:
+      paths:
+        - path: /web
+          backend:
+            serviceName: localhost
+            servicePort: 9090
