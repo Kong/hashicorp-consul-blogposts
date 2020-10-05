@@ -139,8 +139,7 @@ kube-system   kube-proxy-vq6td                                                  
 
 Add Kong Repository:
 <pre>
-$ helm repo add kong https://charts.konghq.com
-"kong" has been added to your repositories
+helm repo add kong https://charts.konghq.com
 </pre>
 
 Create a Namespace:
@@ -167,30 +166,35 @@ helm install kong kong/kong -n kong \
 
 <pre>
 $ kubectl get pod --all-namespaces
-NAMESPACE     NAME                                                              READY   STATUS    RESTARTS   AGE
-default       api-deployment-v1-85cc8c9977-qpnsv                                3/3     Running   0          10m
-default       web-deployment-76dcfdcc8f-sbh4d                                   3/3     Running   0          10m
-hashicorp     consul-connect-consul-connect-injector-webhook-deployment-6wp52   1/1     Running   0          16m
-hashicorp     consul-connect-consul-hgqr7                                       1/1     Running   0          16m
-hashicorp     consul-connect-consul-server-0                                    1/1     Running   0          16m
-kong          ingress-kong-58c75d4f58-vj49d                                     4/4     Running   0          32s
-kube-system   aws-node-85w7d                                                    1/1     Running   0          20m
-kube-system   coredns-7dd54bc488-mzq8k                                          1/1     Running   0          25m
-kube-system   coredns-7dd54bc488-wlxtv                                          1/1     Running   0          25m
-kube-system   kube-proxy-52z8t                                                  1/1     Running   0          20m
+NAMESPACE     NAME                                                              READY   STATUS      RESTARTS   AGE
+default       api-deployment-v1-85cc8c9977-jbbv2                                3/3     Running     0          28m
+default       web-deployment-76dcfdcc8f-2dvn6                                   3/3     Running     0          27m
+hashicorp     consul-connect-consul-connect-injector-webhook-deployment-c6prh   1/1     Running     0          32m
+hashicorp     consul-connect-consul-ct4pw                                       1/1     Running     0          32m
+hashicorp     consul-connect-consul-server-0                                    1/1     Running     0          32m
+kong          kong-kong-5cd475f445-nsdcq                                        1/1     Running     0          77s
+kong          kong-kong-init-migrations-bwhqd                                   0/1     Completed   0          76s
+kong          kong-postgresql-0                                                 1/1     Running     0          76s
+kube-system   aws-node-8w4f4                                                    1/1     Running     0          47m
+kube-system   coredns-5946c5d67c-kfzn8                                          1/1     Running     0          53m
+kube-system   coredns-5946c5d67c-qrpzv                                          1/1     Running     0          53m
+kube-system   kube-proxy-vq6td                                                  1/1     Running     0          47m
 </pre>
 
 <pre>
 $ kubectl get service --all-namespaces
-NAMESPACE     NAME                                         TYPE           CLUSTER-IP       EXTERNAL-IP                                                                        PORT(S)                                                                   AGE
-default       kubernetes                                   ClusterIP      10.100.0.1       <none>                                                                             443/TCP                                                                   26m
-hashicorp     consul-connect-consul-connect-injector-svc   ClusterIP      10.100.168.143   <none>                                                                             443/TCP                                                                   17m
-hashicorp     consul-connect-consul-dns                    ClusterIP      10.100.5.224     <none>                                                                             53/TCP,53/UDP                                                             17m
-hashicorp     consul-connect-consul-server                 ClusterIP      None             <none>                                                                             8500/TCP,8301/TCP,8301/UDP,8302/TCP,8302/UDP,8300/TCP,8600/TCP,8600/UDP   17m
-hashicorp     consul-connect-consul-ui                     LoadBalancer   10.100.182.175   aa392ef1354e74656b439860e404b518-1774317557.ca-central-1.elb.amazonaws.com         80:30365/TCP                                                              17m
-kong          kong-proxy                                   LoadBalancer   10.100.242.168   adf044a74744d47faada93adf8a205fc-c34f8a0ef13568ec.elb.ca-central-1.amazonaws.com   80:30205/TCP,443:31212/TCP                                                56s
-kong          kong-validation-webhook                      ClusterIP      10.100.121.172   <none>                                                                             443/TCP                                                                   55s
-kube-system   kube-dns                                     ClusterIP      10.100.0.10      <none>                                                                             53/UDP,53/TCP                                                             26m
+NAMESPACE     NAME                                         TYPE           CLUSTER-IP       EXTERNAL-IP                                                               PORT(S)                                                                   AGE
+default       kubernetes                                   ClusterIP      10.100.0.1       <none>                                                                    443/TCP                                                                   53m
+default       web-sidecar                                  ClusterIP      10.100.45.250    <none>                                                                    20000/TCP                                                                 27m
+hashicorp     consul-connect-consul-connect-injector-svc   ClusterIP      10.100.242.102   <none>                                                                    443/TCP                                                                   31m
+hashicorp     consul-connect-consul-dns                    ClusterIP      10.100.48.214    <none>                                                                    53/TCP,53/UDP                                                             31m
+hashicorp     consul-connect-consul-server                 ClusterIP      None             <none>                                                                    8500/TCP,8301/TCP,8301/UDP,8302/TCP,8302/UDP,8300/TCP,8600/TCP,8600/UDP   31m
+hashicorp     consul-connect-consul-ui                     LoadBalancer   10.100.199.74    a2f6deb05428549a5bac58042dcd796f-1259403994.us-west-2.elb.amazonaws.com   80:30493/TCP                                                              31m
+kong          kong-kong-admin                              LoadBalancer   10.100.127.202   abc541cc57000442cba78705b2e897cd-1988459246.us-west-2.elb.amazonaws.com   8001:31301/TCP,8444:31442/TCP                                             34s
+kong          kong-kong-proxy                              LoadBalancer   10.100.31.70     ac9c11495f0084fa490fb3604a7fa17f-190377106.us-west-2.elb.amazonaws.com    80:30579/TCP,443:30425/TCP                                                34s
+kong          kong-postgresql                              ClusterIP      10.100.168.65    <none>                                                                    5432/TCP                                                                  34s
+kong          kong-postgresql-headless                     ClusterIP      None             <none>                                                                    5432/TCP                                                                  34s
+kube-system   kube-dns                                     ClusterIP      10.100.0.10      <none>                                                                    53/UDP,53/TCP                                                             53m
 </pre>
 
 Run <b>kubectl describe pod ingress-kong-58c75d4f58-vj49d -n kong</b> to check the 4 containers inside of it: the two Kong for Kubernetes original ones and the other two injected by Consul Connect.
