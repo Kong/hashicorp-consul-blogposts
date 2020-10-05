@@ -25,7 +25,7 @@ The following picture describes the Ingress Gateway, Ingress Controller and Serv
 helm repo add hashicorp https://helm.releases.hashicorp.com
 </pre>
 
-2. Use the following [YAML file](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/consul-values.yml) to install Consul Connect.
+2. Use the following [YAML file](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/consul-values.yml) to install Consul. Notive we are setting synchronization between Kubernetes and Consul services.
 
 <pre>
 global:
@@ -70,60 +70,101 @@ helm install consul-connect -n hashicorp hashicorp/consul -f consul-values.yml
 
 <pre>
 $ kubectl get pod --all-namespaces
-NAMESPACE     NAME                                                              READY   STATUS    RESTARTS   AGE
-hashicorp     consul-connect-consul-connect-injector-webhook-deployment-c6prh   1/1     Running   0          4m39s
-hashicorp     consul-connect-consul-ct4pw                                       1/1     Running   0          4m39s
-hashicorp     consul-connect-consul-server-0                                    1/1     Running   0          4m39s
-kube-system   aws-node-8w4f4                                                    1/1     Running   0          19m
-kube-system   coredns-5946c5d67c-kfzn8                                          1/1     Running   0          26m
-kube-system   coredns-5946c5d67c-qrpzv                                          1/1     Running   0          26m
-kube-system   kube-proxy-vq6td                                                  1/1     Running   0          19m
+NAMESPACE     NAME                                          READY   STATUS    RESTARTS   AGE
+hashicorp     consul-consul-server-0                        1/1     Running   0          3m10s
+hashicorp     consul-consul-sync-catalog-7f7fb45954-zfj96   1/1     Running   0          3m11s
+hashicorp     consul-consul-znr6t                           1/1     Running   0          3m11s
+kube-system   aws-node-wf2rj                                1/1     Running   0          21m
+kube-system   coredns-5946c5d67c-5cvlk                      1/1     Running   0          28m
+kube-system   coredns-5946c5d67c-hq7pf                      1/1     Running   0          28m
+kube-system   kube-proxy-5pv5g                              1/1     Running   0          21m
 </pre>
 
 <pre>
 $ kubectl get service --all-namespaces
-NAMESPACE     NAME                                         TYPE           CLUSTER-IP       EXTERNAL-IP                                                               PORT(S)                                                                   AGE
-default       kubernetes                                   ClusterIP      10.100.0.1       <none>                                                                    443/TCP                                                                   26m
-hashicorp     consul-connect-consul-connect-injector-svc   ClusterIP      10.100.242.102   <none>                                                                    443/TCP                                                                   5m4s
-hashicorp     consul-connect-consul-dns                    ClusterIP      10.100.48.214    <none>                                                                    53/TCP,53/UDP                                                             5m4s
-hashicorp     consul-connect-consul-server                 ClusterIP      None             <none>                                                                    8500/TCP,8301/TCP,8301/UDP,8302/TCP,8302/UDP,8300/TCP,8600/TCP,8600/UDP   5m4s
-hashicorp     consul-connect-consul-ui                     LoadBalancer   10.100.199.74    a2f6deb05428549a5bac58042dcd796f-1259403994.us-west-2.elb.amazonaws.com   80:30493/TCP                                                              5m4s
-kube-system   kube-dns                                     ClusterIP      10.100.0.10      <none>                                                                    53/UDP,53/TCP             
+NAMESPACE     NAME                   TYPE           CLUSTER-IP       EXTERNAL-IP                                                              PORT(S)                                                                   AGE
+default       kubernetes             ClusterIP      10.100.0.1       <none>                                                                   443/TCP                                                                   31m
+hashicorp     consul                 ExternalName   <none>           consul.service.consul                                                    <none>                                                                    4m44s
+hashicorp     consul-consul-dns      ClusterIP      10.100.245.135   <none>                                                                   53/TCP,53/UDP                                                             5m25s
+hashicorp     consul-consul-server   ClusterIP      None             <none>                                                                   8500/TCP,8301/TCP,8301/UDP,8302/TCP,8302/UDP,8300/TCP,8600/TCP,8600/UDP   5m25s
+hashicorp     consul-consul-ui       LoadBalancer   10.100.76.229    a8c100f0db5ad4fa69037c942e8b6391-594908802.us-west-2.elb.amazonaws.com   80:32109/TCP                                                              5m25s
+kube-system   kube-dns               ClusterIP      10.100.0.10      <none>                                                                   53/UDP,53/TCP                                                             31m
 </pre>
 
 Check the Consul Connect services redirecting your browser to Consul UI:
-![ConsulConnect](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/ConsulConnect/artifacts/ConsulConnect.png)
+![ConsulConnect](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/ConsulConnect.png)
 
 
-## Step 2: Deploy Sample Microservices
+## Step 2: Deploy Sample Microservice and Canary
 
-This exercise is based on the same Web and API microservices explored in [HashiCorp Learn](https://learn.hashicorp.com/consul/gs-consul-service-mesh/secure-applications-with-consul-service-mesh) web site. Our intent is to implement mTLS connection with Web Service's Sidecar. In order to do it, we need to expose it as a ClusterIP Service. The sidecar is listening to the default port 20000.
+Canary description
 
 
-1. Deploy Web and API Microservices
+1. Deploy Benigno and Canary Microservices
 
 Use the following declarations to deploy both microservices, [Web](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/ConsulConnect/artifacts/web.yml) and [API](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/ConsulConnect/artifacts/web.yml)
 
 After the deployment you should see the new Kubernetes Pods as well as the new Consul Connect Services.
 <pre>
-kubectl apply -f api.yml
-kubectl apply -f web.yml
+kubectl apply -f deployment_benigno_v1.yaml
+kubectl apply -f service_benigno.yaml
+</pre>
+
+2. Check the installation
+<pre>
+$ kubectl apply -f service_benigno.yaml
+service/benigno-v1 unchanged
+Acquas-MacBook-Pro:MS2 claudio$ kubectl get pod --all-namespaces
+NAMESPACE     NAME                                          READY   STATUS    RESTARTS   AGE
+default       benigno-v1-fd4567d95-s8dtg                    1/1     Running   0          26s
+hashicorp     consul-consul-server-0                        1/1     Running   0          20m
+hashicorp     consul-consul-sync-catalog-7f7fb45954-zfj96   1/1     Running   0          20m
+hashicorp     consul-consul-znr6t                           1/1     Running   0          20m
+kube-system   aws-node-wf2rj                                1/1     Running   0          39m
+kube-system   coredns-5946c5d67c-5cvlk                      1/1     Running   0          46m
+kube-system   coredns-5946c5d67c-hq7pf                      1/1     Running   0          46m
+kube-system   kube-proxy-5pv5g                              1/1     Running   0          39m
 </pre>
 
 <pre>
-$ kubectl get pod --all-namespaces
-NAMESPACE     NAME                                                              READY   STATUS    RESTARTS   AGE
-default       api-deployment-v1-85cc8c9977-jbbv2                                3/3     Running   0          63s
-default       web-deployment-76dcfdcc8f-2dvn6                                   3/3     Running   0          22s
-hashicorp     consul-connect-consul-connect-injector-webhook-deployment-c6prh   1/1     Running   0          4m39s
-hashicorp     consul-connect-consul-ct4pw                                       1/1     Running   0          4m39s
-hashicorp     consul-connect-consul-server-0                                    1/1     Running   0          4m39s
-kube-system   aws-node-8w4f4                                                    1/1     Running   0          19m
-kube-system   coredns-5946c5d67c-kfzn8                                          1/1     Running   0          26m
-kube-system   coredns-5946c5d67c-qrpzv                                          1/1     Running   0          26m
-kube-system   kube-proxy-vq6td                                                  1/1     Running   0          19m
+$ kubectl get service --all-namespaces
+NAMESPACE     NAME                   TYPE           CLUSTER-IP       EXTERNAL-IP                                                              PORT(S)                                                                   AGE
+default       benigno-v1             ClusterIP      10.100.131.200   <none>                                                                   5000/TCP                                                                  32s
+default       kubernetes             ClusterIP      10.100.0.1       <none>                                                                   443/TCP                                                                   46m
+hashicorp     consul                 ExternalName   <none>           consul.service.consul                                                    <none>                                                                    20m
+hashicorp     consul-consul-dns      ClusterIP      10.100.245.135   <none>                                                                   53/TCP,53/UDP                                                             21m
+hashicorp     consul-consul-server   ClusterIP      None             <none>                                                                   8500/TCP,8301/TCP,8301/UDP,8302/TCP,8302/UDP,8300/TCP,8600/TCP,8600/UDP   21m
+hashicorp     consul-consul-ui       LoadBalancer   10.100.76.229    a8c100f0db5ad4fa69037c942e8b6391-594908802.us-west-2.elb.amazonaws.com   80:32109/TCP                                                              21m
+kube-system   kube-dns               ClusterIP      10.100.0.10      <none>                                                                   53/UDP,53/TCP                                                             46m
 </pre>
 
+3. Check the Microservice
+Open a terminal and expose the Benigno Service:
+<pre>
+kubectl port-forward service/benigno-v1 5000:5000
+</pre>
+
+On another terminal send a request to it:
+<pre>
+$ http :5000
+HTTP/1.0 200 OK
+Content-Length: 20
+Content-Type: text/html; charset=utf-8
+Date: Tue, 15 Sep 2020 13:22:25 GMT
+Server: Werkzeug/1.0.1 Python/3.8.3
+
+Hello World, Benigno
+
+</pre>
+
+
+4. Check the Consul Service
+Since we have set the synchronization between Kubernetes and Consul services we should be able Benigno already registered
+<pre>
+kubectl port-forward service/benigno-v1 5000:5000
+</pre>
+
+On another terminal send a request to it:
 
 ![Web&API](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/ConsulConnect/artifacts/ConsulConnectServices.png)
 
