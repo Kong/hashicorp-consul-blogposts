@@ -11,8 +11,7 @@ The following picture describes the Ingress Gateway, Ingress Controller and Serv
 - A Kubernetes Cluster. This exercise was done on an AWS EKS Cluster. Both Consul Connect and Kong Enterprise support any Kubernetes distribution.
 - kubectl
 - Helm 3.x
-- Consul CLI locally installed.
-- HTTPie or Curl.
+- HTTPie and Curl.
 
 
 #  Installation Process
@@ -78,24 +77,24 @@ helm install consul-connect -n hashicorp hashicorp/consul -f consul-connect.yml
 <pre>
 $ kubectl get pod --all-namespaces
 NAMESPACE     NAME                                                              READY   STATUS    RESTARTS   AGE
-hashicorp     consul-connect-consul-connect-injector-webhook-deployment-6wp52   1/1     Running   0          48s
-hashicorp     consul-connect-consul-hgqr7                                       1/1     Running   0          48s
-hashicorp     consul-connect-consul-server-0                                    1/1     Running   0          48s
-kube-system   aws-node-85w7d                                                    1/1     Running   0          3m54s
-kube-system   coredns-7dd54bc488-mzq8k                                          1/1     Running   0          9m36s
-kube-system   coredns-7dd54bc488-wlxtv                                          1/1     Running   0          9m36s
-kube-system   kube-proxy-52z8t                                                  1/1     Running   0          3m54s
+hashicorp     consul-connect-consul-connect-injector-webhook-deployment-c6prh   1/1     Running   0          4m39s
+hashicorp     consul-connect-consul-ct4pw                                       1/1     Running   0          4m39s
+hashicorp     consul-connect-consul-server-0                                    1/1     Running   0          4m39s
+kube-system   aws-node-8w4f4                                                    1/1     Running   0          19m
+kube-system   coredns-5946c5d67c-kfzn8                                          1/1     Running   0          26m
+kube-system   coredns-5946c5d67c-qrpzv                                          1/1     Running   0          26m
+kube-system   kube-proxy-vq6td                                                  1/1     Running   0          19m
 </pre>
 
 <pre>
 $ kubectl get service --all-namespaces
-NAMESPACE     NAME                                         TYPE           CLUSTER-IP       EXTERNAL-IP                                                                  PORT(S)                                                                   AGE
-default       kubernetes                                   ClusterIP      10.100.0.1       <none>                                                                       443/TCP                                                                   10m
-hashicorp     consul-connect-consul-connect-injector-svc   ClusterIP      10.100.168.143   <none>                                                                       443/TCP                                                                   69s
-hashicorp     consul-connect-consul-dns                    ClusterIP      10.100.5.224     <none>                                                                       53/TCP,53/UDP                                                             69s
-hashicorp     consul-connect-consul-server                 ClusterIP      None             <none>                                                                       8500/TCP,8301/TCP,8301/UDP,8302/TCP,8302/UDP,8300/TCP,8600/TCP,8600/UDP   69s
-hashicorp     consul-connect-consul-ui                     LoadBalancer   10.100.182.175   aa392ef1354e74656b439860e404b518-1774317557.ca-central-1.elb.amazonaws.com   80:30365/TCP                                                              69s
-kube-system   kube-dns                                     ClusterIP      10.100.0.10      <none>                                                                       53/UDP,53/TCP                                                             10m
+NAMESPACE     NAME                                         TYPE           CLUSTER-IP       EXTERNAL-IP                                                               PORT(S)                                                                   AGE
+default       kubernetes                                   ClusterIP      10.100.0.1       <none>                                                                    443/TCP                                                                   26m
+hashicorp     consul-connect-consul-connect-injector-svc   ClusterIP      10.100.242.102   <none>                                                                    443/TCP                                                                   5m4s
+hashicorp     consul-connect-consul-dns                    ClusterIP      10.100.48.214    <none>                                                                    53/TCP,53/UDP                                                             5m4s
+hashicorp     consul-connect-consul-server                 ClusterIP      None             <none>                                                                    8500/TCP,8301/TCP,8301/UDP,8302/TCP,8302/UDP,8300/TCP,8600/TCP,8600/UDP   5m4s
+hashicorp     consul-connect-consul-ui                     LoadBalancer   10.100.199.74    a2f6deb05428549a5bac58042dcd796f-1259403994.us-west-2.elb.amazonaws.com   80:30493/TCP                                                              5m4s
+kube-system   kube-dns                                     ClusterIP      10.100.0.10      <none>                                                                    53/UDP,53/TCP             
 </pre>
 
 Check the Consul Connect services redirecting your browser to Consul UI:
