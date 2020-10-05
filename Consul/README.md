@@ -3,7 +3,7 @@
 Consul Service Discovery introduction
 
 The following picture describes the Ingress Gateway, Ingress Controller and Service Mesh architecture.
-![Architecture](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/ConsulConnect/artifacts/architecture.png)
+![Architecture](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/ConsulConnect/artifacts/architecture.png=100x20)
 
 
 #  System Requirements
