@@ -25,7 +25,7 @@ The following picture describes the Ingress Gateway, Ingress Controller and Serv
 helm repo add hashicorp https://helm.releases.hashicorp.com
 </pre>
 
-2. Use the following [YAML file](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/consul-values.yml) to install Consul. Notive we are setting synchronization between Kubernetes and Consul services.
+2. Use the following [YAML file](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/consul-values.yml) to install Consul. Notice we are setting synchronization between Kubernetes and Consul services.
 
 <pre>
 global:
@@ -112,9 +112,7 @@ kubectl apply -f service_benigno.yaml
 
 2. Check the installation
 <pre>
-$ kubectl apply -f service_benigno.yaml
-service/benigno-v1 unchanged
-Acquas-MacBook-Pro:MS2 claudio$ kubectl get pod --all-namespaces
+$ kubectl get pod --all-namespaces
 NAMESPACE     NAME                                          READY   STATUS    RESTARTS   AGE
 default       benigno-v1-fd4567d95-s8dtg                    1/1     Running   0          26s
 hashicorp     consul-consul-server-0                        1/1     Running   0          20m
@@ -159,7 +157,7 @@ Hello World, Benigno
 
 
 4. Check the Consul Service
-Since we have set the synchronization between Kubernetes and Consul services we should be able Benigno already registered
+<p>Since we have set the synchronization between Kubernetes and Consul services we should be able Benigno already registered
 <pre>
 kubectl port-forward service/benigno-v1 5000:5000
 </pre>
