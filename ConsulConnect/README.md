@@ -98,7 +98,7 @@ kube-system   kube-dns                                     ClusterIP      10.100
 </pre>
 
 Check the Consul Connect services redirecting your browser to Consul UI:
-![ConsulConnect](https://github.com/hashicorp/consul-kong-ingress-gateway/blob/master/artifacts/ConsulConnect.png)
+![ConsulConnect]https://github.com/Kong/hashicorp-consul-blogposts/blob/main/ConsulConnect/artifacts/ConsulConnect.png)
 
 
 ## Step 2: Deploy Sample Microservices
