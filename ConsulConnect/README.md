@@ -197,74 +197,20 @@ kong          kong-postgresql-headless                     ClusterIP      None  
 kube-system   kube-dns                                     ClusterIP      10.100.0.10      <none>                                                                    53/UDP,53/TCP                                                             53m
 </pre>
 
-Run <b>kubectl describe pod ingress-kong-58c75d4f58-vj49d -n kong</b> to check the 4 containers inside of it: the two Kong for Kubernetes original ones and the other two injected by Consul Connect.
+
+
+3. Check the Kong Proxy
+
+Hit Kong Proxy through the Load Balancer provisioned by AWS:
 
 <pre>
-$ kubectl describe pod ingress-kong-58c75d4f58-vj49d -n kong
-Name:         ingress-kong-58c75d4f58-vj49d
-Namespace:    kong
-Priority:     0
-Node:         ip-192-168-88-105.ca-central-1.compute.internal/192.168.88.105
-Start Time:   Sat, 05 Sep 2020 12:11:47 -0300
-Labels:       app=ingress-kong
-              pod-template-hash=58c75d4f58
-Annotations:  consul.hashicorp.com/connect-inject: true
-              consul.hashicorp.com/connect-inject-status: injected
-              consul.hashicorp.com/connect-service: kong
-              consul.hashicorp.com/connect-service-port: proxy
-              consul.hashicorp.com/connect-service-upstreams: web:9090
-              kubernetes.io/psp: eks.privileged
-              kuma.io/gateway: enabled
-              prometheus.io/port: 8100
-              prometheus.io/scrape: true
-              traffic.sidecar.istio.io/includeInboundPorts: 
-Status:       Running
-IP:           192.168.85.56
-..........
-Containers:
-  kong:
-    Container ID:   docker://1f56f9de82cf1407fe775dffeee93761c40b9065e3413d86f4c44a03d3c1cff7
-    Image:          kong:2.0
-    Image ID:       docker-pullable://kong@sha256:694e8a2b046a28a846029e0e6b00f9087d644fab94435c872514c0673053087c
-    Ports:          8000/TCP, 8443/TCP, 8100/TCP
-..........
-  ingress-controller:
-    Container ID:   docker://0893a66be776bdcdf891d3800176e2e902711aca12dbf6ce575c0b1289abff39
-    Image:          kong-docker-kubernetes-ingress-controller.bintray.io/kong-ingress-controller:0.9.1
-    Image ID:       docker-pullable://kong-docker-kubernetes-ingress-controller.bintray.io/kong-ingress-controller@sha256:4651b737a07303dc81a377a8d9679e160d8ba152042a67ccb9c89f305a3d0895
-    Port:           8080/TCP
-..........
-  consul-connect-envoy-sidecar:
-    Container ID:  docker://495ac9961c2c2380ba23d12c972379e386d3c8a82aa2622ab31adf949f0e1b57
-    Image:         envoyproxy/envoy-alpine:v1.13.0
-    Image ID:      docker-pullable://envoyproxy/envoy-alpine@sha256:19f3b361450e31f68b46f891b0c8726041739f44ab9b90aecbca5f426c0d2eaf
-    Port:          <none>
-..........
-  consul-connect-lifecycle-sidecar:
-    Container ID:  docker://f07f677c95520f67e204e03de89181fffcfc835d9e15728ffad3debef2b0a0f2
-    Image:         hashicorp/consul-k8s:0.18.1
-    Image ID:      docker-pullable://hashicorp/consul-k8s@sha256:e88ae391bb4aa3f31b688f48a5291d65e962f9301392e4bdf57213e65265116a
-    Port:          <none>
-..........
-</pre>
-
-Check the Consul Connect services again:
-![Services](https://github.com/hashicorp/consul-kong-ingress-gateway/blob/master/artifacts/ConsulConnectServices.png)
-
-
-
-3. Consume the Ingress Controller
-
-Hit the Ingress Controller through the Load Balancer provisioned by AWS:
-
-<pre>
-$ http adf044a74744d47faada93adf8a205fc-c34f8a0ef13568ec.elb.ca-central-1.amazonaws.com
+$ http ac9c11495f0084fa490fb3604a7fa17f-190377106.us-west-2.elb.amazonaws.com
 HTTP/1.1 404 Not Found
 Connection: keep-alive
 Content-Length: 48
 Content-Type: application/json; charset=utf-8
-Date: Sat, 05 Sep 2020 15:26:36 GMT
-Server: kong/2.0.5
+Date: Mon, 05 Oct 2020 13:28:52 GMT
+Server: kong/2.1.4
 X-Kong-Response-Latency: 0
 
 {
@@ -272,11 +218,19 @@ X-Kong-Response-Latency: 0
 }
 </pre>
 
-The return message is coming from Kong for Kubernetes Ingress Controller, saying there's no API defined yet.
+The return message is coming from Kong for Kubernetes, saying there's no API defined yet.
+
+
+4. Check the Kong REST Admin port
+<pre>
+$ http abc541cc57000442cba78705b2e897cd-1988459246.us-west-2.elb.amazonaws.com:8001 | jq .version
+"2.1.4"
+</pre>
 
 
 
-## Step 4: Define an Ingress
+
+## Step 4: Define an I
 
 1. In order to expose the Web microservice, define an Ingress in Kong using Kubernetes CRD like this:
 <pre>
