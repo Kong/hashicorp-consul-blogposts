@@ -31,3 +31,18 @@ spec:
           value: "web"
         - name: "MESSAGE"
           value: "Hello World"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-sidecar
+spec:
+  type: ClusterIP
+  selector:
+    app: web
+  ports:
+  - name: https
+    protocol: TCP
+    port: 20000
+    targetPort: 20000
