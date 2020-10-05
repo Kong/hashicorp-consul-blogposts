@@ -160,7 +160,86 @@ Hello World, Benigno
 
 Since we have set the synchronization between Kubernetes and Consul services we should be able Benigno already registered
 <pre>
-kubectl port-forward service/benigno-v1 5000:5000
+$ http :8500/v1/catalog/services
+HTTP/1.1 200 OK
+Content-Encoding: gzip
+Content-Length: 107
+Content-Type: application/json
+Date: Tue, 15 Sep 2020 14:51:06 GMT
+Vary: Accept-Encoding
+X-Consul-Effective-Consistency: leader
+X-Consul-Index: 44
+X-Consul-Knownleader: true
+X-Consul-Lastcontact: 0
+
+{
+    "benigno-v1-default": [
+        "k8s"
+    ],
+    "consul": [],
+    "consul-consul-dns-hashicorp": [
+        "k8s"
+    ],
+    "consul-consul-server-hashicorp": [
+        "k8s"
+    ],
+    "kubernetes-default": [
+        "k8s"
+    ]
+}
+</pre>
+
+Send another request to check Benigno Consul Service:
+<pre>
+$ http :8500/v1/catalog/service/benigno-v1-default
+HTTP/1.1 200 OK
+Content-Encoding: gzip
+Content-Length: 334
+Content-Type: application/json
+Date: Tue, 15 Sep 2020 14:51:27 GMT
+Vary: Accept-Encoding
+X-Consul-Effective-Consistency: leader
+X-Consul-Index: 44
+X-Consul-Knownleader: true
+X-Consul-Lastcontact: 0
+
+[
+    {
+        "Address": "127.0.0.1",
+        "CreateIndex": 44,
+        "Datacenter": "dc1",
+        "ID": "",
+        "ModifyIndex": 44,
+        "Node": "k8s-sync",
+        "NodeMeta": {
+            "external-source": "kubernetes"
+        },
+        "ServiceAddress": "172.17.0.6",
+        "ServiceConnect": {},
+        "ServiceEnableTagOverride": false,
+        "ServiceID": "benigno-v1-default-36cb73f45c0a",
+        "ServiceKind": "",
+        "ServiceMeta": {
+            "external-k8s-ns": "default",
+            "external-source": "kubernetes",
+            "port-http": "5000"
+        },
+        "ServiceName": "benigno-v1-default",
+        "ServicePort": 5000,
+        "ServiceProxy": {
+            "Expose": {},
+            "MeshGateway": {}
+        },
+        "ServiceTags": [
+            "k8s"
+        ],
+        "ServiceWeights": {
+            "Passing": 1,
+            "Warning": 1
+        },
+        "TaggedAddresses": null
+    }
+]
 </pre>
 
 On another terminal send a request to it:
