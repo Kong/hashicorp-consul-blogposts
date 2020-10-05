@@ -103,7 +103,8 @@ Check the Consul Connect services redirecting your browser to Consul UI:
 
 ## Step 2: Deploy Sample Microservices
 
-This exercise will use the same Web and API microservices explored in [HashiCorp Learn](https://learn.hashicorp.com/consul/gs-consul-service-mesh/secure-applications-with-consul-service-mesh) web site.
+This exercise is based on the same Web and API microservices explored in [HashiCorp Learn](https://learn.hashicorp.com/consul/gs-consul-service-mesh/secure-applications-with-consul-service-mesh) web site. Our intent is to implement mTLS connection with Web Service's Sidecar. In order to do it, we need to expose it as a ClusterIP Service. The sidecar is listening to the default port 20000.
+
 
 1. Deploy Web and API Microservices
 
@@ -118,15 +119,15 @@ kubectl apply -f web.yml
 <pre>
 $ kubectl get pod --all-namespaces
 NAMESPACE     NAME                                                              READY   STATUS    RESTARTS   AGE
-default       api-deployment-v1-85cc8c9977-qpnsv                                3/3     Running   0          91s
-default       web-deployment-76dcfdcc8f-sbh4d                                   3/3     Running   0          86s
-hashicorp     consul-connect-consul-connect-injector-webhook-deployment-6wp52   1/1     Running   0          7m31s
-hashicorp     consul-connect-consul-hgqr7                                       1/1     Running   0          7m31s
-hashicorp     consul-connect-consul-server-0                                    1/1     Running   0          7m31s
-kube-system   aws-node-85w7d                                                    1/1     Running   0          10m
-kube-system   coredns-7dd54bc488-mzq8k                                          1/1     Running   0          16m
-kube-system   coredns-7dd54bc488-wlxtv                                          1/1     Running   0          16m
-kube-system   kube-proxy-52z8t                                                  1/1     Running   0          10m
+default       api-deployment-v1-85cc8c9977-jbbv2                                3/3     Running   0          63s
+default       web-deployment-76dcfdcc8f-2dvn6                                   3/3     Running   0          22s
+hashicorp     consul-connect-consul-connect-injector-webhook-deployment-c6prh   1/1     Running   0          4m39s
+hashicorp     consul-connect-consul-ct4pw                                       1/1     Running   0          4m39s
+hashicorp     consul-connect-consul-server-0                                    1/1     Running   0          4m39s
+kube-system   aws-node-8w4f4                                                    1/1     Running   0          19m
+kube-system   coredns-5946c5d67c-kfzn8                                          1/1     Running   0          26m
+kube-system   coredns-5946c5d67c-qrpzv                                          1/1     Running   0          26m
+kube-system   kube-proxy-vq6td                                                  1/1     Running   0          19m
 </pre>
 
 
@@ -136,14 +137,30 @@ kube-system   kube-proxy-52z8t                                                  
 ## Step 3: Kong for Kubernetes (K4K8S) Installation
 1. Install Kong for Kubernetes
 
-The original Kong [YAML file](https://github.com/hashicorp/consul-kong-ingress-gateway/blob/master/artifacts/all-in-one-dbless-consulconnect.yml) used for the installation has been updated in three settings:<p>
-. an annotation to instruct Consul to inject the sidecar in Kong for Kubernetes pod.<p>
-. another annotation specifing the Service Upstream.<p>
-. Kong deployment name to "kong".<p>
-
-Install Kong for Kubernetes with <b>kubectl</b>
+Add Kong Repository:
 <pre>
-kubectl apply -f all-in-one-dbless-consulconnect.yml
+$ helm repo add kong https://charts.konghq.com
+"kong" has been added to your repositories
+</pre>
+
+Create a Namespace:
+<pre>
+kubectl create namespace kong
+</pre>
+
+Install Kong for Kubernetes with <b>Helm</b>
+<pre>
+helm install kong kong/kong -n kong \
+--set admin.enabled=true \
+--set admin.type=LoadBalancer \
+--set admin.http.enabled=true \
+--set env.database=postgres \
+--set postgresql.enabled=true \
+--set postgresql.postgresqlUsername=kong \
+--set postgresql.postgresqlDatabase=kong \
+--set postgresql.postgresqlPassword=kong \
+--set ingressController.enabled=false \
+--set ingressController.installCRDs=false
 </pre>
 
 2. Check the installation
