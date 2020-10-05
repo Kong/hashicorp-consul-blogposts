@@ -3,7 +3,7 @@
 Consul Connect is one of the main Service Mesh implementations in the marketplace today. Along with Kong for Kubernetes, we can expose the Service Mesh through APIs to external Consumers as well as protecting it with several policies including Rate Limiting, API Keys, OAuth/OIDC grants, Log Processing, Tracing, etc.
 
 The following picture describes the Kong and Consul Connect Service Mesh architecture.
-![Architecture](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/ConsulConnect/artifacts/architecture.png =50x20)
+![Architecture](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/ConsulConnect/artifacts/architecture.png){ width=50% }
 
 
 #  System Requirements
