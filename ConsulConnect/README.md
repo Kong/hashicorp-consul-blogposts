@@ -11,6 +11,7 @@ The following picture describes the Ingress Gateway, Ingress Controller and Serv
 - A Kubernetes Cluster. This exercise was done on an AWS EKS Cluster. Both Consul Connect and Kong Enterprise support any Kubernetes distribution.
 - kubectl
 - Helm 3.x
+- Consul CLI
 - HTTPie and Curl.
 
 
@@ -240,7 +241,7 @@ $ kubectl port-forward service/consul-connect-consul-server -n hashicorp 8500:85
 Forwarding from 127.0.0.1:8500 -> 8500
 Forwarding from [::1]:8500 -> 8500
 Handling connection for 8500
-<pre>
+</pre>
 
 2. On another terminal run the following command to get the Digital Certificates and Private Key:
 <pre>
@@ -257,633 +258,37 @@ cert.key: Server Private Key
 </pre>
 
 
-3. Define an [External Service](https://github.com/hashicorp/consul-kong-ingress-gateway/blob/master/artifacts/web-externalservice.yml) to loopback address using another CRD like this:
+
+## Step 5: Define Kong Service and Route
+
+1. Insert the Digital Certificates and Private Key in Kong:
 <pre>
-apiVersion: v1
-kind: Service
-metadata:
-  name: localhost
-  namespace: default
-spec:
-  externalName: localhost
-  ports:
-  - port: 9090
-    protocol: TCP
-  type: ExternalName
-</pre>
-
-4. Apply the both declarations
-<pre>
-kubectl apply -f web-ingress.yml
-kubectl apply -f web-externalservice.yml
-</pre>
-
-4. Consume the Ingress
-<pre>
-$ http adf044a74744d47faada93adf8a205fc-c34f8a0ef13568ec.elb.ca-central-1.amazonaws.com/web
-HTTP/1.1 200 OK
-Connection: keep-alive
-Content-Length: 623
-Content-Type: text/plain; charset=utf-8
-Date: Sat, 05 Sep 2020 15:29:45 GMT
-Vary: Origin
-Via: kong/2.0.5
-X-Kong-Proxy-Latency: 0
-X-Kong-Upstream-Latency: 24
-
-{
-    "body": "Hello World",
-    "code": 200,
-    "duration": "15.327627ms",
-    "end_time": "2020-09-05T15:29:45.231809",
-    "ip_addresses": [
-        "192.168.74.44"
-    ],
-    "name": "web",
-    "start_time": "2020-09-05T15:29:45.216481",
-    "type": "HTTP",
-    "upstream_calls": [
-        {
-            "body": "Response from API v1",
-            "code": 200,
-            "duration": "204.524µs",
-            "end_time": "2020-09-05T15:29:45.230780",
-            "ip_addresses": [
-                "192.168.76.226"
-            ],
-            "name": "api-v1",
-            "start_time": "2020-09-05T15:29:45.230576",
-            "type": "HTTP",
-            "uri": "http://localhost:9091"
-        }
-    ],
-    "uri": "/"
-}
-</pre>
-
-The request has been sent to the Ingress Controller. The path <b>"/web"</b> routes the request to the Web microservice which in its turn calls the API microservice.
-
-5. Define an intention to control the communication between Kong for Kubernetes and Web microservice
-Open a local terminal and run:
-<pre>
-kubectl port-forward consul-connect-consul-server-0 -n hashicorp 8500:8500
-</pre>
-
-Open another local terminal and define an intention to control the communication between Kong for Kubernetes and Web microservice:
-<pre>
-consul intention create -deny kong web
-</pre>
-
-<pre>
-$ http adf044a74744d47faada93adf8a205fc-c34f8a0ef13568ec.elb.ca-central-1.amazonaws.com/web
-HTTP/1.1 502 Bad Gateway
-Connection: keep-alive
-Content-Length: 58
-Content-Type: text/plain; charset=utf-8
-Date: Sat, 05 Sep 2020 15:32:27 GMT
-Server: kong/2.0.5
-Via: kong/2.0.5
-X-Kong-Proxy-Latency: 11
-X-Kong-Upstream-Latency: 91
-
-An invalid response was received from the upstream server
-</pre>
-
-6. Delete the intention to allow the communication again
-<pre>
-consul intention delete kong web
-</pre>
-
-7. Define an intention to control the communication between the two microservices:
-<pre>
-consul intention create -deny web api
-</pre>
-
-<pre>
-$ http adf044a74744d47faada93adf8a205fc-c34f8a0ef13568ec.elb.ca-central-1.amazonaws.com/web
-HTTP/1.1 500 Internal Server Error
-Connection: keep-alive
-Content-Length: 417
-Content-Type: text/plain; charset=utf-8
-Date: Sat, 05 Sep 2020 15:32:58 GMT
-Vary: Origin
-Via: kong/2.0.5
-X-Kong-Proxy-Latency: 0
-X-Kong-Upstream-Latency: 7
-
-{
-    "code": 500,
-    "duration": "5.208606ms",
-    "end_time": "2020-09-05T15:32:58.441107",
-    "ip_addresses": [
-        "192.168.74.44"
-    ],
-    "name": "web",
-    "start_time": "2020-09-05T15:32:58.435899",
-    "type": "HTTP",
-    "upstream_calls": [
-        {
-            "code": -1,
-            "error": "Error communicating with upstream service: Get http://localhost:9091/: EOF",
-            "uri": "http://localhost:9091"
-        }
-    ],
-    "uri": "/"
-}
-</pre>
-
-8. Delete the intention to allow the communication again
-<pre>
-consul intention delete web api
-</pre>
-
-
-
-## Step 5: Implement a Rate Limiting policy with Kong for Kubernetes Ingress Controller
-
-1. Instantiate a Kong for Kubernetes plugin to define the Rate Limiting policy.
-
-Kong for Kubernetes provides an extensive list of plugin to implement all sort of policies typically enabled at the Ingress Controller layer. Beside Rate Limiting, Caching, OIDC based User and App Authentication, Log Processing, Canary, mTLS, etc. are other examples of policies that can be applied to the Ingresses.
-
-Apply a [declaration](https://github.com/hashicorp/consul-kong-ingress-gateway/blob/master/artifacts/ratelimiting.yml) like this to define the Rate Limiting policy using a specific Kong Plugin:
-<pre>
-apiVersion: configuration.konghq.com/v1
-kind: KongPlugin
-metadata:
-  name: rl-by-minute
-config:
-  minute: 3
-  policy: local
-plugin: rate-limiting
-</pre>
-
-The declaration instantiates the Rate Limiting plugin defining a policy that allows 3 requests a minute.
-
-
-2. Instantiate the Kong Plugin
-<pre>
-kubectl apply -f ratelimiting.yml
-</pre>
-
-2. Apply the policy to the Ingress
-A policy is applied to an Ingress including a specific annontation to it:
-<pre>
-kubectl patch ingress web -p '{"metadata":{"annotations":{"plugins.konghq.com":"rl-by-minute"}}}'
-</pre>
-
-
-3. Consume the Ingress
-The Rate Limiting counter is shown when the request is sent:
-<pre>
-$ http adf044a74744d47faada93adf8a205fc-c34f8a0ef13568ec.elb.ca-central-1.amazonaws.com/web
-
-HTTP/1.1 200 OK
-Connection: keep-alive
-Content-Length: 621
-Content-Type: text/plain; charset=utf-8
-Date: Sat, 05 Sep 2020 15:34:42 GMT
-RateLimit-Limit: 3
-RateLimit-Remaining: 2
-RateLimit-Reset: 18
-Vary: Origin
-Via: kong/2.0.5
-X-Kong-Proxy-Latency: 1
-X-Kong-Upstream-Latency: 6
-X-RateLimit-Limit-Minute: 3
-X-RateLimit-Remaining-Minute: 2
-
-{
-    "body": "Hello World",
-    "code": 200,
-    "duration": "3.697067ms",
-    "end_time": "2020-09-05T15:34:42.085906",
-    "ip_addresses": [
-        "192.168.74.44"
-    ],
-    "name": "web",
-    "start_time": "2020-09-05T15:34:42.082209",
-    "type": "HTTP",
-    "upstream_calls": [
-        {
-            "body": "Response from API v1",
-            "code": 200,
-            "duration": "74.005µs",
-            "end_time": "2020-09-05T15:34:42.085387",
-            "ip_addresses": [
-                "192.168.76.226"
-            ],
-            "name": "api-v1",
-            "start_time": "2020-09-05T15:34:42.085313",
-            "type": "HTTP",
-            "uri": "http://localhost:9091"
-        }
-    ],
-    "uri": "/"
-}
-</pre>
-
-
-A specific 429 error is received when hitting the Ingress for the fourth time within the same minute:
-
-<pre>
-$ http adf044a74744d47faada93adf8a205fc-c34f8a0ef13568ec.elb.ca-central-1.amazonaws.com/web
-HTTP/1.1 429 Too Many Requests
-Connection: keep-alive
-Content-Length: 37
-Content-Type: application/json; charset=utf-8
-Date: Sat, 05 Sep 2020 15:34:46 GMT
-RateLimit-Limit: 3
-RateLimit-Remaining: 0
-RateLimit-Reset: 14
-Retry-After: 14
-Server: kong/2.0.5
-X-Kong-Response-Latency: 1
-X-RateLimit-Limit-Minute: 3
-X-RateLimit-Remaining-Minute: 0
-
-{
-    "message": "API rate limit exceeded"
-}
-</pre>
-
-
-
-Kong for Kubernetes and Consul Proxy Ingress - Kubernetes
-Reference Architecture
-
-System Requirements
-kubectl
-Helm 3.x
-HTTPie and Curl.
-
-Creating an EKS Cluster
-eksctl creates implicitly a specific VPC for our EKS Cluster.
-
-$ eksctl create cluster --name K4K8S-ConsulConnect --version 1.17 --nodegroup-name standard-workers --node-type t3.medium --nodes 1
-
-Deleting the EKS Cluster
-In case you need to delete it, run the following command:
-
-eksctl delete cluster --name K4K8S-ConsulConnect
-
-
-Consul Connect Installation
-
-Setting Consul Connect Helm Charts
-helm repo add hashicorp https://helm.releases.hashicorp.com
-
-
-YAML Declaration - consul-connect.yml
-global:
-  datacenter: dc1
-  image: "consul:1.8.3"
-  imageK8S: "hashicorp/consul-k8s:0.18.1"
-  imageEnvoy: "envoyproxy/envoy-alpine:v1.14.4"
-
-# Expose the Consul UI through this LoadBalancer
-ui:
-  service:
-    type: LoadBalancer
-
-# Allow Consul to inject the Connect proxy into Kubernetes containers
-connectInject:
-  enabled: true
-
-
-# Configure a Consul client on Kubernetes nodes. GRPC listener is required for Connect.
-client:
-  enabled: true
-  grpc: true
-
-
-# Minimal Consul configuration. Not suitable for production.
-server:
-  replicas: 1
-  bootstrapExpect: 1
-  disruptionBudget:
-    enabled: true
-    maxUnavailable: 0
-
-# Sync Kubernetes and Consul services
-syncCatalog:
-  enabled: false
-
-
-Consul Connect Installation
-Create a Namespace for Consul
-kubectl create namespace hashicorp
-
-Install Consul Connect with Helm
-helm install consul-connect -n hashicorp hashicorp/consul -f consul-connect.yml
-
-$ kubectl get service --all-namespaces
-NAMESPACE     NAME                                         TYPE           CLUSTER-IP       EXTERNAL-IP                                                               PORT(S)                                                                   AGE
-default       kubernetes                                   ClusterIP      10.100.0.1       <none>                                                                    443/TCP                                                                   26m
-hashicorp     consul-connect-consul-connect-injector-svc   ClusterIP      10.100.242.102   <none>                                                                    443/TCP                                                                   5m4s
-hashicorp     consul-connect-consul-dns                    ClusterIP      10.100.48.214    <none>                                                                    53/TCP,53/UDP                                                             5m4s
-hashicorp     consul-connect-consul-server                 ClusterIP      None             <none>                                                                    8500/TCP,8301/TCP,8301/UDP,8302/TCP,8302/UDP,8300/TCP,8600/TCP,8600/UDP   5m4s
-hashicorp     consul-connect-consul-ui                     LoadBalancer   10.100.199.74    a2f6deb05428549a5bac58042dcd796f-1259403994.us-west-2.elb.amazonaws.com   80:30493/TCP                                                              5m4s
-kube-system   kube-dns                                     ClusterIP      10.100.0.10      <none>                                                                    53/UDP,53/TCP                                                             26m
-
-
-Check the Consul Connect services redirecting your browser to Consul UI:
-
-
-
-Deploy Sample Microservices - api.yml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: api-deployment-v1
-  labels:
-    app: api-v1
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: api-v1
-  template:
-    metadata:
-      labels:
-        app: api-v1
-      annotations:
-        "consul.hashicorp.com/connect-inject": "true"
-    spec:
-      containers:
-      - name: api
-        image: nicholasjackson/fake-service:v0.7.8
-        ports:
-        - containerPort: 9090
-        env:
-        - name: "LISTEN_ADDR"
-          value: "127.0.0.1:9090"
-        - name: "NAME"
-          value: "api-v1"
-        - name: "MESSAGE"
-          value: "Response from API v1"
-
-
-
-kubectl apply -f api.yml
-
-
-Deploy Sample Microservices - web-sidecar.yml
-Our intent is to implement mTLS connection with Web Service's Sidecar. In order to do it, we need to expose it as a ClusterIP Service. The sidecar is listening to the default port 20000. Create a "web-sidecarservice.yaml" file like this and apply it with "kubectl":
-
-kubectl apply -f web-sidecar.yml
-
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: web-deployment
-  labels:
-    app: web
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: web
-  template:
-    metadata:
-      labels:
-        app: web
-      annotations:
-        "consul.hashicorp.com/connect-inject": "true"
-        "consul.hashicorp.com/connect-service-upstreams": "api:9091"
-    spec:
-      containers:
-      - name: web
-        image: nicholasjackson/fake-service:v0.7.8
-        ports:
-        - containerPort: 9090
-        env:
-        - name: "LISTEN_ADDR"
-          value: "0.0.0.0:9090"
-        - name: "UPSTREAM_URIS"
-          value: "http://localhost:9091"
-        - name: "NAME"
-          value: "web"
-        - name: "MESSAGE"
-          value: "Hello World"
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: web-sidecar
-spec:
-  type: ClusterIP
-  selector:
-    app: web
-  ports:
-  - name: https
-    protocol: TCP
-    port: 20000
-    targetPort: 20000
-
-
-
-kubectl apply -f web-sidecar.yml
-
-Checking the Microservices
-$ kubectl get pod --all-namespaces
-NAMESPACE     NAME                                                              READY   STATUS    RESTARTS   AGE
-default       api-deployment-v1-85cc8c9977-jbbv2                                3/3     Running   0          63s
-default       web-deployment-76dcfdcc8f-2dvn6                                   3/3     Running   0          22s
-hashicorp     consul-connect-consul-connect-injector-webhook-deployment-c6prh   1/1     Running   0          4m39s
-hashicorp     consul-connect-consul-ct4pw                                       1/1     Running   0          4m39s
-hashicorp     consul-connect-consul-server-0                                    1/1     Running   0          4m39s
-kube-system   aws-node-8w4f4                                                    1/1     Running   0          19m
-kube-system   coredns-5946c5d67c-kfzn8                                          1/1     Running   0          26m
-kube-system   coredns-5946c5d67c-qrpzv                                          1/1     Running   0          26m
-kube-system   kube-proxy-vq6td                                                  1/1     Running   0          19m
-
-
-$ kubectl get service --all-namespaces
-NAMESPACE     NAME                                         TYPE           CLUSTER-IP       EXTERNAL-IP                                                               PORT(S)                                                                   AGE
-default       kubernetes                                   ClusterIP      10.100.0.1       <none>                                                                    443/TCP                                                                   26m
-default       web-sidecar                                  ClusterIP      10.100.45.250    <none>                                                                    20000/TCP                                                                 45s
-hashicorp     consul-connect-consul-connect-injector-svc   ClusterIP      10.100.242.102   <none>                                                                    443/TCP                                                                   5m4s
-hashicorp     consul-connect-consul-dns                    ClusterIP      10.100.48.214    <none>                                                                    53/TCP,53/UDP                                                             5m4s
-hashicorp     consul-connect-consul-server                 ClusterIP      None             <none>                                                                    8500/TCP,8301/TCP,8301/UDP,8302/TCP,8302/UDP,8300/TCP,8600/TCP,8600/UDP   5m4s
-hashicorp     consul-connect-consul-ui                     LoadBalancer   10.100.199.74    a2f6deb05428549a5bac58042dcd796f-1259403994.us-west-2.elb.amazonaws.com   80:30493/TCP                                                              5m4s
-kube-system   kube-dns                                     ClusterIP      10.100.0.10      <none>                                                                    53/UDP,53/TCP                                                             26m
-
-
-
-
-
-
-
-Kong for Kubernetes Installation
-Setting the Kong Repository
-$ helm repo add kong https://charts.konghq.com
-"kong" has been added to your repositories
-
-$ helm repo update
-Hang tight while we grab the latest from your chart repositories...
-...Successfully got an update from the "kong" chart repository
-Update Complete. ⎈ Happy Helming!⎈ 
-
-$ helm repo ls
-NAME   	URL                               
-kong   	https://charts.konghq.com
-
-If you want to delete the repository run:
-$ helm repo rm kong
-
-
-
-Installing K4K8S
-$ kubectl create namespace kong
-
-$ helm install kong kong/kong -n kong \
---set admin.enabled=true \
---set admin.type=LoadBalancer \
---set admin.http.enabled=true \
---set env.database=postgres \
---set postgresql.enabled=true \
---set postgresql.postgresqlUsername=kong \
---set postgresql.postgresqlDatabase=kong \
---set postgresql.postgresqlPassword=kong \
---set ingressController.enabled=false \
---set ingressController.installCRDs=false
-
-
-Checking the Installation
-Notice that, since we disabled the Controller, the Kong Pod has only one Container running.
-
-$ kubectl get pod --all-namespaces
-NAMESPACE     NAME                                                              READY   STATUS      RESTARTS   AGE
-default       api-deployment-v1-85cc8c9977-jbbv2                                3/3     Running     0          28m
-default       web-deployment-76dcfdcc8f-2dvn6                                   3/3     Running     0          27m
-hashicorp     consul-connect-consul-connect-injector-webhook-deployment-c6prh   1/1     Running     0          32m
-hashicorp     consul-connect-consul-ct4pw                                       1/1     Running     0          32m
-hashicorp     consul-connect-consul-server-0                                    1/1     Running     0          32m
-kong          kong-kong-5cd475f445-nsdcq                                        1/1     Running     0          77s
-kong          kong-kong-init-migrations-bwhqd                                   0/1     Completed   0          76s
-kong          kong-postgresql-0                                                 1/1     Running     0          76s
-kube-system   aws-node-8w4f4                                                    1/1     Running     0          47m
-kube-system   coredns-5946c5d67c-kfzn8                                          1/1     Running     0          53m
-kube-system   coredns-5946c5d67c-qrpzv                                          1/1     Running     0          53m
-kube-system   kube-proxy-vq6td                                                  1/1     Running     0          47m
-
-
-
-$ kubectl get service --all-namespaces
-NAMESPACE     NAME                                         TYPE           CLUSTER-IP       EXTERNAL-IP                                                               PORT(S)                                                                   AGE
-default       kubernetes                                   ClusterIP      10.100.0.1       <none>                                                                    443/TCP                                                                   53m
-default       web-sidecar                                  ClusterIP      10.100.45.250    <none>                                                                    20000/TCP                                                                 27m
-hashicorp     consul-connect-consul-connect-injector-svc   ClusterIP      10.100.242.102   <none>                                                                    443/TCP                                                                   31m
-hashicorp     consul-connect-consul-dns                    ClusterIP      10.100.48.214    <none>                                                                    53/TCP,53/UDP                                                             31m
-hashicorp     consul-connect-consul-server                 ClusterIP      None             <none>                                                                    8500/TCP,8301/TCP,8301/UDP,8302/TCP,8302/UDP,8300/TCP,8600/TCP,8600/UDP   31m
-hashicorp     consul-connect-consul-ui                     LoadBalancer   10.100.199.74    a2f6deb05428549a5bac58042dcd796f-1259403994.us-west-2.elb.amazonaws.com   80:30493/TCP                                                              31m
-kong          kong-kong-admin                              LoadBalancer   10.100.127.202   abc541cc57000442cba78705b2e897cd-1988459246.us-west-2.elb.amazonaws.com   8001:31301/TCP,8444:31442/TCP                                             34s
-kong          kong-kong-proxy                              LoadBalancer   10.100.31.70     ac9c11495f0084fa490fb3604a7fa17f-190377106.us-west-2.elb.amazonaws.com    80:30579/TCP,443:30425/TCP                                                34s
-kong          kong-postgresql                              ClusterIP      10.100.168.65    <none>                                                                    5432/TCP                                                                  34s
-kong          kong-postgresql-headless                     ClusterIP      None             <none>                                                                    5432/TCP                                                                  34s
-kube-system   kube-dns                                     ClusterIP      10.100.0.10      <none>                                                                    53/UDP,53/TCP                                                             53m
-
-
-
-
-
-
-Checking the Proxy
-Use the Load Balancer created during the deployment
-
-$ http ac9c11495f0084fa490fb3604a7fa17f-190377106.us-west-2.elb.amazonaws.com
-HTTP/1.1 404 Not Found
-Connection: keep-alive
-Content-Length: 48
-Content-Type: application/json; charset=utf-8
-Date: Mon, 05 Oct 2020 13:28:52 GMT
-Server: kong/2.1.4
-X-Kong-Response-Latency: 0
-
-{
-    "message": "no Route matched with those values"
-}
-
-
-
-Checking the Rest Admin API
-Try to consume the ELB
-
-$ http abc541cc57000442cba78705b2e897cd-1988459246.us-west-2.elb.amazonaws.com:8001 | jq .version
-"2.1.4"
-
-
-Deleting Kong Enterprise
-helm uninstall kong -n kong
-kubectl delete namespace kong
-
-
-
-
-Consul Digital Certificates
-Install Consul locally. In MacOS we can use brew
-brew install consul
-
-Issue the Digital Certificates and Private Key
-On a terminal expose the Consul Server Service:
-
-$ kubectl port-forward service/consul-connect-consul-server -n hashicorp 8500:8500
-Forwarding from 127.0.0.1:8500 -> 8500
-Forwarding from [::1]:8500 -> 8500
-Handling connection for 8500
-
-
-On another terminal run the following command to get the Digital Certificates and Private Key
-http :8500/v1/connect/ca/roots | jq -r .Roots[].RootCert > ca.crt
-http :8500/v1/agent/connect/ca/leaf/web | jq -r .CertPEM > cert.pem
-http :8500/v1/agent/connect/ca/leaf/web | jq -r .PrivateKeyPEM > cert.key
-
-After running the command you should see three files:
-ca.crt: CA's Digital Certificate
-cert.pem: Server Digital Certificate
-cert.key: Server Private Key
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Creating Kong Digital Certificates, Service and Route
-
-Inject the three files in Kong:
-
 $ curl -sX POST http://abc541cc57000442cba78705b2e897cd-1988459246.us-west-2.elb.amazonaws.com:8001/ca_certificates -F "cert=@./ca.crt"
 
 $ curl -sX POST http://abc541cc57000442cba78705b2e897cd-1988459246.us-west-2.elb.amazonaws.com:8001/certificates \
     -F "cert=@./cert.pem" \
     -F "key=@./cert.key"
+</pre>
 
-
-Create a Service based on the Sidecar
+2. Create a Kong Service based on the Sidecar
 Get the Client Certificate Id:
-
+<pre>
 $ http abc541cc57000442cba78705b2e897cd-1988459246.us-west-2.elb.amazonaws.com:8001/certificates | jq -r .data[].id
 a1c9f2cf-d449-4779-bffb-567e5768cbd4
+</pre>
 
-
-Use the id during the Kong Service and Kong Route definition
-
+3. Use the id to create the Kong Service and Kong Route:
+<pre>
 http abc541cc57000442cba78705b2e897cd-1988459246.us-west-2.elb.amazonaws.com:8001/services name=sidecarservice \
 url='https://web-sidecar.default.svc.cluster.local:20000' \
 client_certificate:='{"id": "a1c9f2cf-d449-4779-bffb-567e5768cbd4"}'
 
 http abc541cc57000442cba78705b2e897cd-1988459246.us-west-2.elb.amazonaws.com:8001/services/sidecarservice/routes name='route1' paths:='["/route1"]'
+</pre>
 
-Consume the  Kong Enterprise Route
+
+3. Consume the Kong Routes
+<pre>
 $ http ac9c11495f0084fa490fb3604a7fa17f-190377106.us-west-2.elb.amazonaws.com/route1
 HTTP/1.1 200 OK
 Connection: keep-alive
@@ -923,14 +328,68 @@ X-Kong-Upstream-Latency: 40
     ],
     "uri": "/"
 }
+</pre>
 
 
-Applying a Rate Limiting Policy
-We're still able to use Kong Enterprise plugins and define all sort of policies to the routes. For example, here's the Rate Limiting plugin:
+6. Define an intention to control the communication between the two microservices:
+Using Consul CLI installed locally run:
+<pre>
+consul intention create -deny web api
+</pre>
 
+<pre>
+$ http ac9c11495f0084fa490fb3604a7fa17f-190377106.us-west-2.elb.amazonaws.com/route1
+HTTP/1.1 500 Internal Server Error
+Connection: keep-alive
+Content-Length: 419
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 05 Oct 2020 14:09:18 GMT
+RateLimit-Limit: 3
+RateLimit-Remaining: 2
+RateLimit-Reset: 42
+Vary: Origin
+Via: kong/2.1.4
+X-Kong-Proxy-Latency: 18
+X-Kong-Upstream-Latency: 39
+
+{
+    "code": 500,
+    "duration": "36.707335ms",
+    "end_time": "2020-10-05T14:09:18.373399",
+    "ip_addresses": [
+        "192.168.25.245"
+    ],
+    "name": "web",
+    "start_time": "2020-10-05T14:09:18.336692",
+    "type": "HTTP",
+    "upstream_calls": [
+        {
+            "code": -1,
+            "error": "Error communicating with upstream service: Get http://localhost:9091/: EOF",
+            "uri": "http://localhost:9091"
+        }
+    ],
+    "uri": "/"
+}
+</pre>
+
+8. Delete the intention to allow the communication again
+<pre>
+consul intention delete web api
+</pre>
+
+
+
+## Step 5: Implement a Rate Limiting policy with Kong for Kubernetes
+
+1. Apply a Rate Limiting policy to the Kong Route using the specific Plugin
+<pre>
 http abc541cc57000442cba78705b2e897cd-1988459246.us-west-2.elb.amazonaws.com:8001/routes/route1/plugins name=rate-limiting config:='{"minute": 3}'
+</pre>
 
-
+2. Consume the Route
+The Rate Limiting counter is shown when the request is sent:
+<pre>
 $ http ac9c11495f0084fa490fb3604a7fa17f-190377106.us-west-2.elb.amazonaws.com/route1
 HTTP/1.1 200 OK
 Connection: keep-alive
@@ -975,10 +434,12 @@ X-RateLimit-Remaining-Minute: 2
     ],
     "uri": "/"
 }
+</pre>
 
 
-If we keep sending requests, eventually, we're going to get a specific 429 error code
+A specific 429 error is received when hitting the Route for the fourth time within the same minute:
 
+<pre>
 $ http ac9c11495f0084fa490fb3604a7fa17f-190377106.us-west-2.elb.amazonaws.com/route1
 HTTP/1.1 429 Too Many Requests
 Connection: keep-alive
@@ -997,6 +458,5 @@ X-RateLimit-Remaining-Minute: 0
 {
     "message": "API rate limit exceeded"
 }
-
-
+</pre>
 
