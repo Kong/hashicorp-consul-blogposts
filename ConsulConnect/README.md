@@ -230,32 +230,34 @@ $ http abc541cc57000442cba78705b2e897cd-1988459246.us-west-2.elb.amazonaws.com:8
 
 
 
-## Step 4: Define an I
+## Step 4: Consul Digital Certificates and Private Key
 
-1. In order to expose the Web microservice, define an Ingress in Kong using Kubernetes CRD like this:
+Issue the Digital Certificates and Private Key consuming the Consul specific APIs:
+
+1. On a terminal expose the Consul Server Service:
 <pre>
-apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  name: web
-  namespace: default
-  annotations:
-    konghq.com/strip-path: "true"
-spec:
-  rules:
-  - http:
-      paths:
-        - path: /web
-          backend:
-            serviceName: localhost
-            servicePort: 9090
+$ kubectl port-forward service/consul-connect-consul-server -n hashicorp 8500:8500
+Forwarding from 127.0.0.1:8500 -> 8500
+Forwarding from [::1]:8500 -> 8500
+Handling connection for 8500
+<pre>
+
+2. On another terminal run the following command to get the Digital Certificates and Private Key:
+<pre>
+http :8500/v1/connect/ca/roots | jq -r .Roots[].RootCert > ca.crt
+http :8500/v1/agent/connect/ca/leaf/web | jq -r .CertPEM > cert.pem
+http :8500/v1/agent/connect/ca/leaf/web | jq -r .PrivateKeyPEM > cert.key
 </pre>
 
-The Ingress is based on the <b>"localhost"</b> Kubernetes Service and defines a path "<b>/web</b>" to expose it to the consumers. A copy of this file can be found [here](https://github.com/hashicorp/consul-kong-ingress-gateway/blob/master/artifacts/web-ingress.yml)
+After running the command you should see three files:
+<pre>
+ca.crt: CA's Digital Certificate
+cert.pem: Server Digital Certificate
+cert.key: Server Private Key
+</pre>
 
-Notice the Ingress is referencing the loopback address as required by the Consul Connect Sidecar, so it can intercept all the requests going to it.
 
-2. Define an [External Service](https://github.com/hashicorp/consul-kong-ingress-gateway/blob/master/artifacts/web-externalservice.yml) to loopback address using another CRD like this:
+3. Define an [External Service](https://github.com/hashicorp/consul-kong-ingress-gateway/blob/master/artifacts/web-externalservice.yml) to loopback address using another CRD like this:
 <pre>
 apiVersion: v1
 kind: Service
@@ -270,7 +272,7 @@ spec:
   type: ExternalName
 </pre>
 
-3. Apply the both declarations
+4. Apply the both declarations
 <pre>
 kubectl apply -f web-ingress.yml
 kubectl apply -f web-externalservice.yml
