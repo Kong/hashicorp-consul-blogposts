@@ -3,7 +3,7 @@
 Consul Connect is one of the main Service Mesh implementations in the marketplace today. Along with Kong Enterprise, we can expose the Service Mesh through APIs to external Consumers as well as protecting it with several policies including Rate Limiting, API Keys, OAuth/OIDC grants, Log Processing, Tracing, etc.
 
 The following picture describes the Ingress Gateway, Ingress Controller and Service Mesh architecture.
-![Architecture](https://github.com/hashicorp/consul-kong-ingress-gateway/blob/master/ConsulConnect/artifacts/architecture.png)
+![Architecture](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/ConsulConnect/artifacts/architecture.png)
 
 
 #  System Requirements
