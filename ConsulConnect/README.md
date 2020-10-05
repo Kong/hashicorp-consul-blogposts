@@ -131,7 +131,7 @@ kube-system   kube-proxy-vq6td                                                  
 </pre>
 
 
-![Web&API](https://github.com/hashicorp/consul-kong-ingress-gateway/blob/master/artifacts/webapi.png)
+![Web&API](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/ConsulConnect/artifacts/ConsulConnectServices.png)
 
 
 ## Step 3: Kong for Kubernetes (K4K8S) Installation
