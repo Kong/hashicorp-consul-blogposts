@@ -1,4 +1,4 @@
-# Consul Connect Service Mesh and <p> Kong Enterprise
+# Consul Service Discovery and <p> Kong for Kubernetes
 
 Consul Connect is one of the main Service Mesh implementations in the marketplace today. Along with Kong Enterprise, we can expose the Service Mesh through APIs to external Consumers as well as protecting it with several policies including Rate Limiting, API Keys, OAuth/OIDC grants, Log Processing, Tracing, etc.
 
@@ -459,4 +459,1112 @@ X-RateLimit-Remaining-Minute: 0
     "message": "API rate limit exceeded"
 }
 </pre>
+
+
+
+
+
+Consul - Minikube Installation
+https://learn.hashicorp.com/consul/kubernetes/kubernetes-reference
+https://learn.hashicorp.com/consul/kubernetes/minikube
+https://www.consul.io/docs/k8s/service-sync
+https://www.consul.io/docs/k8s/helm
+https://www.hashicorp.com/blog/consul-and-kubernetes-service-catalog-sync/
+https://www.consul.io/docs/k8s/dns
+
+
+minikube start --driver=virtualbox --memory=8192
+
+
+Installing Consul
+
+Getting Consul Connect Helm Charts
+helm repo add hashicorp https://helm.releases.hashicorp.com
+helm search repo hashicorp/consul
+helm fetch hashicorp/consul
+
+
+consul-values.yml
+global:
+  datacenter: dc1
+  image: "consul:1.8.3"
+
+# Expose the Consul UI through this LoadBalancer
+ui:
+  service:
+    type: LoadBalancer
+
+# Configure a Consul client on Kubernetes nodes. GRPC listener is required for Connect.
+client:
+  enabled: true
+  grpc: true
+
+
+# Minimal Consul configuration. Not suitable for production.
+server:
+  replicas: 1
+  bootstrapExpect: 1
+  disruptionBudget:
+    enabled: true
+    maxUnavailable: 0
+
+# Sync Kubernetes and Consul services
+syncCatalog:
+  enabled: true
+
+
+
+
+
+Installing Consul
+kubectl create namespace hashicorp
+helm install consul hashicorp/consul -n hashicorp -f consul-values.yml
+
+
+$ kubectl get pod --all-namespaces
+NAMESPACE     NAME                               READY   STATUS    RESTARTS   AGE
+hashicorp     consul-consul-lrqxp                1/1     Running   0          2m47s
+hashicorp     consul-consul-server-0             1/1     Running   0          2m47s
+kube-system   coredns-f9fd979d6-h2cvh            1/1     Running   1          23h
+kube-system   etcd-minikube                      1/1     Running   1          23h
+kube-system   kube-apiserver-minikube            1/1     Running   1          23h
+kube-system   kube-controller-manager-minikube   1/1     Running   1          23h
+kube-system   kube-proxy-vmbqj                   1/1     Running   1          23h
+kube-system   kube-scheduler-minikube            1/1     Running   1          23h
+kube-system   storage-provisioner                1/1     Running   2          23h
+
+
+
+
+$ kubectl get pod --all-namespaces -o wide
+NAMESPACE     NAME                                         READY   STATUS    RESTARTS   AGE     IP               NODE       NOMINATED NODE   READINESS GATES
+default       benigno-v1-7d8ccdc66b-s89qv                  1/1     Running   0          4m4s    172.17.0.6       minikube   <none>           <none>
+default       busybox                                      1/1     Running   0          70s     172.17.0.7       minikube   <none>           <none>
+hashicorp     consul-consul-f6gn9                          1/1     Running   0          6m5s    172.17.0.3       minikube   <none>           <none>
+hashicorp     consul-consul-server-0                       1/1     Running   0          6m5s    172.17.0.5       minikube   <none>           <none>
+hashicorp     consul-consul-sync-catalog-68b75f5cf-j27mn   1/1     Running   0          6m5s    172.17.0.4       minikube   <none>           <none>
+kube-system   coredns-f9fd979d6-pbsfm                      1/1     Running   0          8m6s    172.17.0.2       minikube   <none>           <none>
+kube-system   etcd-minikube                                1/1     Running   0          8m11s   192.168.99.231   minikube   <none>           <none>
+kube-system   kube-apiserver-minikube                      1/1     Running   0          8m11s   192.168.99.231   minikube   <none>           <none>
+kube-system   kube-controller-manager-minikube             1/1     Running   0          8m11s   192.168.99.231   minikube   <none>           <none>
+kube-system   kube-proxy-df5tr                             1/1     Running   0          8m7s    192.168.99.231   minikube   <none>           <none>
+kube-system   kube-scheduler-minikube                      1/1     Running   0          8m11s   192.168.99.231   minikube   <none>           <none>
+kube-system   storage-provisioner                          1/1     Running   0          8m11s   192.168.99.231   minikube   <none>           <none>
+
+
+
+
+$ minikube ip
+192.168.99.231
+
+
+
+
+
+
+
+
+
+Deploying Benigno
+kubectl delete -f deployment_benigno_v1.yaml
+kubectl delete -f service_benigno.yaml
+
+kubectl port-forward consul-consul-server-0 -n hashicorp 8500:8500
+
+
+deployment_benigno_v1.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: benigno-v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: benigno
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: benigno
+        version: v1
+    spec:
+      containers:
+      - name: benigno
+        image: claudioacquaviva/benigno
+        ports:
+        - containerPort: 5000
+
+
+
+service_benigno.yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: benigno-v1
+  labels:
+    app: benigno-v1
+spec:
+  type: ClusterIP
+  ports:
+  - port: 5000
+    name: http
+  selector:
+    app: benigno
+    version: v1
+
+
+
+
+
+
+kubectl apply -f deployment_benigno_v1.yaml
+kubectl apply -f service_benigno.yaml
+
+
+
+
+$ kubectl get pod --all-namespaces
+NAMESPACE     NAME                               READY   STATUS    RESTARTS   AGE
+default       benigno-v1-7d8ccdc66b-c6hvr        1/1     Running   0          6s
+hashicorp     consul-consul-lrqxp                1/1     Running   0          5m24s
+hashicorp     consul-consul-server-0             1/1     Running   0          5m24s
+kube-system   coredns-f9fd979d6-h2cvh            1/1     Running   1          23h
+kube-system   etcd-minikube                      1/1     Running   1          23h
+kube-system   kube-apiserver-minikube            1/1     Running   1          23h
+kube-system   kube-controller-manager-minikube   1/1     Running   1          23h
+kube-system   kube-proxy-vmbqj                   1/1     Running   1          23h
+kube-system   kube-scheduler-minikube            1/1     Running   1          23h
+kube-system   storage-provisioner                1/1     Running   2          23h
+
+
+$ kubectl get service --all-namespaces
+NAMESPACE     NAME                   TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)                                                                   AGE
+default       benigno                ClusterIP      10.103.192.87    <none>        5000/TCP                                                                  19s
+default       kubernetes             ClusterIP      10.96.0.1        <none>        443/TCP                                                                   23h
+hashicorp     consul-consul-dns      ClusterIP      10.107.241.195   <none>        53/TCP,53/UDP                                                             5m37s
+hashicorp     consul-consul-server   ClusterIP      None             <none>        8500/TCP,8301/TCP,8301/UDP,8302/TCP,8302/UDP,8300/TCP,8600/TCP,8600/UDP   5m37s
+hashicorp     consul-consul-ui       LoadBalancer   10.107.114.104   <pending>     80:30888/TCP                                                              5m37s
+kube-system   kube-dns               ClusterIP      10.96.0.10       <none>        53/UDP,53/TCP,9153/TCP                                                    23h
+
+
+kubectl port-forward service/benigno-v1 5000:5000
+
+$ http :5000
+HTTP/1.0 200 OK
+Content-Length: 20
+Content-Type: text/html; charset=utf-8
+Date: Tue, 15 Sep 2020 13:22:25 GMT
+Server: Werkzeug/1.0.1 Python/3.8.3
+
+Hello World, Benigno
+
+
+
+
+
+Consul Service
+$ http :8500/v1/catalog/services
+HTTP/1.1 200 OK
+Content-Encoding: gzip
+Content-Length: 107
+Content-Type: application/json
+Date: Tue, 15 Sep 2020 14:51:06 GMT
+Vary: Accept-Encoding
+X-Consul-Effective-Consistency: leader
+X-Consul-Index: 44
+X-Consul-Knownleader: true
+X-Consul-Lastcontact: 0
+
+{
+    "benigno-v1-default": [
+        "k8s"
+    ],
+    "consul": [],
+    "consul-consul-dns-hashicorp": [
+        "k8s"
+    ],
+    "consul-consul-server-hashicorp": [
+        "k8s"
+    ],
+    "kubernetes-default": [
+        "k8s"
+    ]
+}
+
+
+$ http :8500/v1/catalog/service/benigno-v1-default
+HTTP/1.1 200 OK
+Content-Encoding: gzip
+Content-Length: 334
+Content-Type: application/json
+Date: Tue, 15 Sep 2020 14:51:27 GMT
+Vary: Accept-Encoding
+X-Consul-Effective-Consistency: leader
+X-Consul-Index: 44
+X-Consul-Knownleader: true
+X-Consul-Lastcontact: 0
+
+[
+    {
+        "Address": "127.0.0.1",
+        "CreateIndex": 44,
+        "Datacenter": "dc1",
+        "ID": "",
+        "ModifyIndex": 44,
+        "Node": "k8s-sync",
+        "NodeMeta": {
+            "external-source": "kubernetes"
+        },
+        "ServiceAddress": "172.17.0.6",
+        "ServiceConnect": {},
+        "ServiceEnableTagOverride": false,
+        "ServiceID": "benigno-v1-default-36cb73f45c0a",
+        "ServiceKind": "",
+        "ServiceMeta": {
+            "external-k8s-ns": "default",
+            "external-source": "kubernetes",
+            "port-http": "5000"
+        },
+        "ServiceName": "benigno-v1-default",
+        "ServicePort": 5000,
+        "ServiceProxy": {
+            "Expose": {},
+            "MeshGateway": {}
+        },
+        "ServiceTags": [
+            "k8s"
+        ],
+        "ServiceWeights": {
+            "Passing": 1,
+            "Warning": 1
+        },
+        "TaggedAddresses": null
+    }
+]
+
+
+
+$ http :8500/v1/health/service/benigno-v1-default
+HTTP/1.1 200 OK
+Content-Encoding: gzip
+Content-Length: 336
+Content-Type: application/json
+Date: Tue, 15 Sep 2020 14:51:47 GMT
+Vary: Accept-Encoding
+X-Consul-Effective-Consistency: leader
+X-Consul-Index: 44
+X-Consul-Knownleader: true
+X-Consul-Lastcontact: 0
+
+[
+    {
+        "Checks": [],
+        "Node": {
+            "Address": "127.0.0.1",
+            "CreateIndex": 16,
+            "Datacenter": "dc1",
+            "ID": "",
+            "Meta": {
+                "external-source": "kubernetes"
+            },
+            "ModifyIndex": 16,
+            "Node": "k8s-sync",
+            "TaggedAddresses": null
+        },
+        "Service": {
+            "Address": "172.17.0.6",
+            "Connect": {},
+            "CreateIndex": 44,
+            "EnableTagOverride": false,
+            "ID": "benigno-v1-default-36cb73f45c0a",
+            "Meta": {
+                "external-k8s-ns": "default",
+                "external-source": "kubernetes",
+                "port-http": "5000"
+            },
+            "ModifyIndex": 44,
+            "Port": 5000,
+            "Proxy": {
+                "Expose": {},
+                "MeshGateway": {}
+            },
+            "Service": "benigno-v1-default",
+            "Tags": [
+                "k8s"
+            ],
+            "Weights": {
+                "Passing": 1,
+                "Warning": 1
+            }
+        }
+    }
+]
+
+
+
+
+
+Sending DNS Requests - busybox.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: busybox
+  namespace: default
+spec:
+  containers:
+  - name: busybox
+    image: busybox:1.28
+    command:
+      - sleep
+      - "3600"
+    imagePullPolicy: IfNotPresent
+  restartPolicy: Always
+
+
+
+kubectl apply -f busybox.yaml
+
+Send a request to Consul Server which is Pod address is 172.17.0.3
+
+$ kubectl get pod --all-namespaces -o wide
+NAMESPACE     NAME                                         READY   STATUS    RESTARTS   AGE     IP               NODE       NOMINATED NODE   READINESS GATES
+default       benigno-v1-7d8ccdc66b-s89qv                  1/1     Running   0          4m4s    172.17.0.6       minikube   <none>           <none>
+default       busybox                                      1/1     Running   0          70s     172.17.0.7       minikube   <none>           <none>
+hashicorp     consul-consul-f6gn9                          1/1     Running   0          6m5s    172.17.0.3       minikube   <none>           <none>
+hashicorp     consul-consul-server-0                       1/1     Running   0          6m5s    172.17.0.5       minikube   <none>           <none>
+hashicorp     consul-consul-sync-catalog-68b75f5cf-j27mn   1/1     Running   0          6m5s    172.17.0.4       minikube   <none>           <none>
+kube-system   coredns-f9fd979d6-pbsfm                      1/1     Running   0          8m6s    172.17.0.2       minikube   <none>           <none>
+kube-system   etcd-minikube                                1/1     Running   0          8m11s   192.168.99.231   minikube   <none>           <none>
+kube-system   kube-apiserver-minikube                      1/1     Running   0          8m11s   192.168.99.231   minikube   <none>           <none>
+kube-system   kube-controller-manager-minikube             1/1     Running   0          8m11s   192.168.99.231   minikube   <none>           <none>
+kube-system   kube-proxy-df5tr                             1/1     Running   0          8m7s    192.168.99.231   minikube   <none>           <none>
+kube-system   kube-scheduler-minikube                      1/1     Running   0          8m11s   192.168.99.231   minikube   <none>           <none>
+kube-system   storage-provisioner                          1/1     Running   0          8m11s   192.168.99.231   minikube   <none>           <none>
+
+
+
+
+
+$ kubectl exec -ti busybox /bin/sh
+kubectl exec [POD] [COMMAND] is DEPRECATED and will be removed in a future version. Use kubectl exec [POD] -- [COMMAND] instead.
+/ # nslookup benigno-v1-default.service.consul 172.17.0.3:8600
+Server:    172.17.0.3
+Address 1: 172.17.0.3 minikube.node.dc1.consul
+
+Name:      benigno-v1-default.service.consul
+Address 1: 172.17.0.6 benigno-v1-default.service.dc1.consul
+/ # 
+
+
+
+
+
+
+
+Configuring Consul DNS - consul_dns.yaml
+$ kubectl get service consul-consul-dns -n hashicorp -o jsonpath='{.spec.clusterIP}'
+10.105.0.130
+
+
+$ kubectl edit configmap coredns -n kube-system
+# Please edit the object below. Lines beginning with a '#' will be ignored,
+# and an empty file will abort the edit. If an error occurs while saving this file will be
+# reopened with the relevant failures.
+#
+apiVersion: v1
+data:
+  Corefile: |
+    .:53 {
+        errors
+        health {
+           lameduck 5s
+        }
+        ready
+        kubernetes cluster.local in-addr.arpa ip6.arpa {
+           pods insecure
+           fallthrough in-addr.arpa ip6.arpa
+           ttl 30
+        }
+        prometheus :9153
+        forward . /etc/resolv.conf
+        cache 30
+        loop
+        reload
+        loadbalance
+    }
+    consul {
+        errors
+        cache 30
+        forward . 10.105.0.130
+    }
+kind: ConfigMap
+metadata:
+  creationTimestamp: "2020-06-19T13:42:16Z"
+  managedFields:
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:data:
+        .: {}
+        f:Corefile: {}
+    manager: kubeadm
+    operation: Update
+    time: "2020-06-19T13:42:16Z"
+  name: coredns
+  namespace: kube-system
+  resourceVersion: "178"
+  selfLink: /api/v1/namespaces/kube-system/configmaps/coredns
+  uid: 698c5d0c-998e-4aa4-9857-67958eeee25a
+
+
+Testing Consul DNS - job.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: dns
+spec:
+  template:
+    spec:
+      containers:
+        - name: dns
+          image: anubhavmishra/tiny-tools
+          command: ['dig', 'benigno-v1-default.service.dc1.consul']
+      restartPolicy: Never
+  backoffLimit: 4
+
+
+
+
+$ kubectl apply -f job.yaml
+job.batch/dns created
+
+
+$ kubectl get pods | grep dns
+dns-vmz7k                     0/1     Completed   0          51s
+
+$ kubectl logs dns-vmz7k
+
+; <<>> DiG 9.11.2-P1 <<>> benigno-v1-default.service.dc1.consul
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 41181
+;; flags: qr aa rd; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1
+;; WARNING: recursion requested but not available
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 4096
+;; QUESTION SECTION:
+;benigno-v1-default.service.dc1.consul. IN A
+
+;; ANSWER SECTION:
+benigno-v1-default.service.dc1.consul. 5 IN A	172.17.0.6
+
+;; Query time: 1 msec
+;; SERVER: 10.96.0.10#53(10.96.0.10)
+;; WHEN: Tue Sep 15 15:00:48 UTC 2020
+;; MSG SIZE  rcvd: 119
+
+
+
+
+
+
+$ kubectl delete -f job.yaml
+$ kubectl delete job dns
+
+
+
+Modify Magnanimo code to consume Benigno Consul Service
+In order to get the Microservices connected, Magnanimo has to use the Consul Service DNS, which will be benigno1.service.consul
+
+from flask import Flask
+from datetime import datetime
+import requests
+
+app = Flask(__name__)
+
+@app.route('/')
+def index():
+    return 'Hello World, Magnanimo', 200
+
+@app.route('/sentence')
+def sentence():
+    return 'Hello World, Magnanimo - Kong', 200
+
+@app.route('/hello')
+def hello():
+    return 'Hello World, Magnanimo: %s' % (datetime.now())
+
+@app.route('/hw2')
+def hw2():
+    r = requests.get("http://benigno:5000/hello")
+    return r.text
+
+@app.route('/hw3')
+def hw3():
+    r = requests.get("http://benigno1.service.consul:5000/hello")
+    return r.text
+
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=4000)
+
+
+After updating Magnanimo's code, create a new Docker image for it.
+
+docker build -t claudioacquaviva/magnanimo_consul .
+docker push claudioacquaviva/magnanimo_consul
+
+
+
+Deploying Magnanimo
+deployment_magnanimo.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: magnanimo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: magnanimo
+  template:
+    metadata:
+      labels:
+        app: magnanimo
+    spec:
+      containers:
+      - name: magnanimo
+        image: claudioacquaviva/magnanimo_consul
+        ports:
+        - containerPort: 4000
+
+
+service_magnanimo.yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: magnanimo
+  labels:
+    app: magnanimo
+spec:
+  type: ClusterIP
+  ports:
+  - port: 4000
+    name: http
+  selector:
+    app: magnanimo
+
+
+
+kubectl apply -f deployment_magnanimo.yaml
+kubectl apply -f service_magnanimo.yaml
+
+kubectl port-forward service/magnanimo 4000:4000
+
+$ http :4000
+HTTP/1.0 200 OK
+Content-Length: 22
+Content-Type: text/html; charset=utf-8
+Date: Tue, 15 Sep 2020 15:02:01 GMT
+Server: Werkzeug/1.0.1 Python/3.8.3
+
+Hello World, Magnanimo
+
+
+
+$ http :4000/hw3
+HTTP/1.0 500 INTERNAL SERVER ERROR
+Content-Length: 290
+Content-Type: text/html; charset=utf-8
+Date: Tue, 15 Sep 2020 15:02:04 GMT
+Server: Werkzeug/1.0.1 Python/3.8.3
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<title>500 Internal Server Error</title>
+<h1>Internal Server Error</h1>
+<p>The server encountered an internal error and was unable to complete your request. Either the server is overloaded or there is an error in the application.</p>
+
+
+
+
+
+
+
+Consul Service Load Balancing
+
+Deploying Benigno Canary Release
+kubectl apply -f deployment_benigno_rc.yaml
+kubectl apply -f service_benigno_rc.yaml
+
+kubectl port-forward hashicorp-consul-server-0 8500:8500
+
+$ http :8500/v1/catalog/services
+HTTP/1.1 200 OK
+Content-Encoding: gzip
+Content-Length: 122
+Content-Type: application/json
+Date: Tue, 15 Sep 2020 15:05:51 GMT
+Vary: Accept-Encoding
+X-Consul-Effective-Consistency: leader
+X-Consul-Index: 294
+X-Consul-Knownleader: true
+X-Consul-Lastcontact: 0
+
+{
+    "benigno-v1-default": [
+        "k8s"
+    ],
+    "benigno-v2-default": [
+        "k8s"
+    ],
+    "consul": [],
+    "consul-consul-dns-hashicorp": [
+        "k8s"
+    ],
+    "consul-consul-server-hashicorp": [
+        "k8s"
+    ],
+    "kubernetes-default": [
+        "k8s"
+    ],
+    "magnanimo-default": [
+        "k8s"
+    ]
+}
+
+
+$ http :8500/v1/catalog/service/benigno-v1-default
+HTTP/1.1 200 OK
+Content-Encoding: gzip
+Content-Length: 334
+Content-Type: application/json
+Date: Tue, 15 Sep 2020 15:06:16 GMT
+Vary: Accept-Encoding
+X-Consul-Effective-Consistency: leader
+X-Consul-Index: 44
+X-Consul-Knownleader: true
+X-Consul-Lastcontact: 0
+
+[
+    {
+        "Address": "127.0.0.1",
+        "CreateIndex": 44,
+        "Datacenter": "dc1",
+        "ID": "",
+        "ModifyIndex": 44,
+        "Node": "k8s-sync",
+        "NodeMeta": {
+            "external-source": "kubernetes"
+        },
+        "ServiceAddress": "172.17.0.6",
+        "ServiceConnect": {},
+        "ServiceEnableTagOverride": false,
+        "ServiceID": "benigno-v1-default-36cb73f45c0a",
+        "ServiceKind": "",
+        "ServiceMeta": {
+            "external-k8s-ns": "default",
+            "external-source": "kubernetes",
+            "port-http": "5000"
+        },
+        "ServiceName": "benigno-v1-default",
+        "ServicePort": 5000,
+        "ServiceProxy": {
+            "Expose": {},
+            "MeshGateway": {}
+        },
+        "ServiceTags": [
+            "k8s"
+        ],
+        "ServiceWeights": {
+            "Passing": 1,
+            "Warning": 1
+        },
+        "TaggedAddresses": null
+    }
+]
+
+
+$ http :8500/v1/catalog/service/benigno-v2-default
+HTTP/1.1 200 OK
+Content-Encoding: gzip
+Content-Length: 334
+Content-Type: application/json
+Date: Tue, 15 Sep 2020 15:06:40 GMT
+Vary: Accept-Encoding
+X-Consul-Effective-Consistency: leader
+X-Consul-Index: 294
+X-Consul-Knownleader: true
+X-Consul-Lastcontact: 0
+
+[
+    {
+        "Address": "127.0.0.1",
+        "CreateIndex": 294,
+        "Datacenter": "dc1",
+        "ID": "",
+        "ModifyIndex": 294,
+        "Node": "k8s-sync",
+        "NodeMeta": {
+            "external-source": "kubernetes"
+        },
+        "ServiceAddress": "172.17.0.9",
+        "ServiceConnect": {},
+        "ServiceEnableTagOverride": false,
+        "ServiceID": "benigno-v2-default-174c34d4f2ae",
+        "ServiceKind": "",
+        "ServiceMeta": {
+            "external-k8s-ns": "default",
+            "external-source": "kubernetes",
+            "port-http": "5000"
+        },
+        "ServiceName": "benigno-v2-default",
+        "ServicePort": 5000,
+        "ServiceProxy": {
+            "Expose": {},
+            "MeshGateway": {}
+        },
+        "ServiceTags": [
+            "k8s"
+        ],
+        "ServiceWeights": {
+            "Passing": 1,
+            "Warning": 1
+        },
+        "TaggedAddresses": null
+    }
+]
+
+
+
+
+ben0.json
+{
+  "ID": "ben0",
+  "Name": "benigno1",
+  "Tags": ["primary"],
+  "Address": "172.17.0.6",
+  "Port": 5000,
+  "weights": {
+    "passing": 1,
+    "warning": 1
+  }
+}
+
+
+
+
+ben1.json
+{
+  "ID": "ben1",
+  "Name": "benigno1",
+  "Tags": ["secondary"],
+  "Address": "172.17.0.9",
+  "Port": 5000,
+  "weights": {
+    "passing": 99,
+    "warning": 1
+  }
+}
+
+
+
+http put :8500/v1/agent/service/register < ben0.json
+http put :8500/v1/agent/service/register < ben1.json
+
+http :8500/v1/agent/services
+http :8500/v1/agent/service/ben0
+http :8500/v1/agent/service/ben1
+
+$ http :8500/v1/agent/health/service/name/benigno1
+HTTP/1.1 200 OK
+Content-Encoding: gzip
+Content-Length: 249
+Content-Type: application/json
+Date: Wed, 16 Sep 2020 18:55:12 GMT
+Vary: Accept-Encoding
+X-Consul-Reason: passing
+
+[
+    {
+        "AggregatedStatus": "passing",
+        "Checks": [],
+        "Service": {
+            "Address": "172.17.0.9",
+            "EnableTagOverride": false,
+            "ID": "ben1",
+            "Meta": {},
+            "Port": 5000,
+            "Service": "benigno1",
+            "TaggedAddresses": {
+                "lan_ipv4": {
+                    "Address": "172.17.0.9",
+                    "Port": 5000
+                },
+                "wan_ipv4": {
+                    "Address": "172.17.0.9",
+                    "Port": 5000
+                }
+            },
+            "Tags": [
+                "secondary"
+            ],
+            "Weights": {
+                "Passing": 99,
+                "Warning": 1
+            }
+        }
+    },
+    {
+        "AggregatedStatus": "passing",
+        "Checks": [],
+        "Service": {
+            "Address": "172.17.0.6",
+            "EnableTagOverride": false,
+            "ID": "ben0",
+            "Meta": {},
+            "Port": 5000,
+            "Service": "benigno1",
+            "TaggedAddresses": {
+                "lan_ipv4": {
+                    "Address": "172.17.0.6",
+                    "Port": 5000
+                },
+                "wan_ipv4": {
+                    "Address": "172.17.0.6",
+                    "Port": 5000
+                }
+            },
+            "Tags": [
+                "primary"
+            ],
+            "Weights": {
+                "Passing": 1,
+                "Warning": 1
+            }
+        }
+    }
+]
+
+
+$ kubectl get service --all-namespaces
+NAMESPACE     NAME                   TYPE           CLUSTER-IP      EXTERNAL-IP               PORT(S)                                                                   AGE
+default       benigno-v1             ClusterIP      10.109.43.73    <none>                    5000/TCP                                                                  29h
+default       benigno-v2             ClusterIP      10.100.80.136   <none>                    5000/TCP                                                                  29h
+default       kubernetes             ClusterIP      10.96.0.1       <none>                    443/TCP                                                                   30h
+default       magnanimo              ClusterIP      10.109.1.23     <none>                    4000/TCP                                                                  87m
+hashicorp     benigno1               ExternalName   <none>          benigno1.service.consul   <none>                                                                    111m
+hashicorp     consul                 ExternalName   <none>          consul.service.consul     <none>                                                                    29h
+hashicorp     consul-consul-dns      ClusterIP      10.105.0.130    <none>                    53/TCP,53/UDP                                                             29h
+hashicorp     consul-consul-server   ClusterIP      None            <none>                    8500/TCP,8301/TCP,8301/UDP,8302/TCP,8302/UDP,8300/TCP,8600/TCP,8600/UDP   29h
+hashicorp     consul-consul-ui       LoadBalancer   10.104.155.34   <pending>                 80:32379/TCP                                                              29h
+kube-system   kube-dns               ClusterIP      10.96.0.10      <none>                    53/UDP,53/TCP,9153/TCP                                                    30h
+
+
+
+
+If you want to delete the service run:
+
+http put :8500/v1/agent/service/deregister/ben0
+http put :8500/v1/agent/service/deregister/ben1
+
+
+Sending DNS Requests
+$ kubectl exec -ti busybox /bin/sh
+kubectl exec [POD] [COMMAND] is DEPRECATED and will be removed in a future version. Use kubectl exec [POD] -- [COMMAND] instead.
+/ # nslookup benigno1.service.consul
+Server:    10.96.0.10
+Address 1: 10.96.0.10 kube-dns.kube-system.svc.cluster.local
+
+Name:      benigno1.service.consul
+Address 1: 172.17.0.9 172-17-0-9.benigno-v2.default.svc.cluster.local
+Address 2: 172.17.0.6 172-17-0-6.benigno-v1.default.svc.cluster.local
+/ # 
+
+
+
+
+
+Sending requests
+If you want to see the different responses coming from both releases, run this simple script:
+
+kubectl port-forward service/magnanimo 4000:4000
+
+while true;
+ do sleep 1;
+ http :4000/hw3;
+ echo -e '\n\n\n\n'$(date);
+done
+
+while [ 1 ]; do curl http://localhost:4000/hw3; sleep 1; echo; done
+
+
+
+
+
+
+
+Kong Settings
+
+Setting the Kong Repository
+$ helm repo add kong https://charts.konghq.com
+"kong" has been added to your repositories
+
+$ helm repo update
+Hang tight while we grab the latest from your chart repositories...
+...Successfully got an update from the "kong" chart repository
+Update Complete. ⎈ Happy Helming!⎈ 
+
+$ helm repo ls
+NAME   	URL                               
+kong   	https://charts.konghq.com
+
+If you want to delete the repository run:
+$ helm repo rm kong
+
+
+Installing K4K8S
+$ kubectl create namespace kong
+
+$ helm install kong kong/kong -n kong \
+--set ingressController.installCRDs=false
+
+Deleting K4K8S
+If you want to uninstall K4K8S run:
+$ helm uninstall kong -n kong
+
+ 
+Checking the Installation
+$ kubectl get pod --all-namespaces
+NAMESPACE     NAME                                         READY   STATUS      RESTARTS   AGE
+default       benigno-v1-7d8ccdc66b-s89qv                  1/1     Running     0          123m
+default       benigno-v2-65d889f545-7gbmc                  1/1     Running     0          107m
+default       busybox                                      1/1     Running     1          120m
+default       dns-vmz7k                                    0/1     Completed   0          112m
+default       magnanimo-5bb7bb95bb-rmvnc                   1/1     Running     0          83m
+hashicorp     consul-consul-f6gn9                          1/1     Running     0          125m
+hashicorp     consul-consul-server-0                       1/1     Running     0          125m
+hashicorp     consul-consul-sync-catalog-68b75f5cf-j27mn   1/1     Running     0          125m
+kong          kong-kong-55b764dbc7-5vz5g                   2/2     Running     2          60s
+kube-system   coredns-f9fd979d6-pbsfm                      1/1     Running     0          127m
+kube-system   etcd-minikube                                1/1     Running     0          127m
+kube-system   kube-apiserver-minikube                      1/1     Running     0          127m
+kube-system   kube-controller-manager-minikube             1/1     Running     0          127m
+kube-system   kube-proxy-df5tr                             1/1     Running     0          127m
+kube-system   kube-scheduler-minikube                      1/1     Running     0          127m
+kube-system   storage-provisioner                          1/1     Running     0          127m
+
+
+
+$ kubectl get service --all-namespaces
+NAMESPACE     NAME                   TYPE           CLUSTER-IP       EXTERNAL-IP                      PORT(S)                                                                   AGE
+default       benigno-v1             ClusterIP      10.109.43.73     <none>                           5000/TCP                                                                  123m
+default       benigno-v2             ClusterIP      10.100.80.136    <none>                           5000/TCP                                                                  107m
+default       kubernetes             ClusterIP      10.96.0.1        <none>                           443/TCP                                                                   127m
+default       magnanimo              ClusterIP      10.105.109.199   <none>                           4000/TCP                                                                  111m
+hashicorp     benigno-service        ExternalName   <none>           benigno-service.service.consul   <none>                                                                    95m
+hashicorp     consul                 ExternalName   <none>           consul.service.consul            <none>                                                                    124m
+hashicorp     consul-consul-dns      ClusterIP      10.105.0.130     <none>                           53/TCP,53/UDP                                                             125m
+hashicorp     consul-consul-server   ClusterIP      None             <none>                           8500/TCP,8301/TCP,8301/UDP,8302/TCP,8302/UDP,8300/TCP,8600/TCP,8600/UDP   125m
+hashicorp     consul-consul-ui       LoadBalancer   10.104.155.34    <pending>                        80:32379/TCP                                                              125m
+kong          kong-kong-proxy        LoadBalancer   10.98.126.247    <pending>                        80:30688/TCP,443:31664/TCP                                                90s
+kube-system   kube-dns               ClusterIP      10.96.0.10       <none>                           53/UDP,53/TCP,9153/TCP                                                    127m
+
+
+
+
+$ http 192.168.99.231:30688
+HTTP/1.1 404 Not Found
+Connection: keep-alive
+Content-Length: 48
+Content-Type: application/json; charset=utf-8
+Date: Tue, 15 Sep 2020 16:54:34 GMT
+Server: kong/2.1.3
+X-Kong-Response-Latency: 0
+
+{
+    "message": "no Route matched with those values"
+}
+
+
+
+
+
+Registering the Kong Ingress - benignoroute.yaml
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: benignoroute
+  namespace: hashicorp
+  annotations:
+    konghq.com/strip-path: "true"
+spec:
+  rules:
+  - http:
+      paths:
+        - path: /benignoroute
+          backend:
+            serviceName: benigno1
+            servicePort: 5000
+
+
+$ kubectl apply -f benignoroute.yml
+
+Testing the Ingress
+$ http 192.168.99.231:30688/benignoroute
+HTTP/1.1 200 OK
+Connection: keep-alive
+Content-Length: 36
+Content-Type: text/html; charset=utf-8
+Date: Wed, 16 Sep 2020 20:37:22 GMT
+Server: Werkzeug/1.0.1 Python/3.8.3
+Via: kong/2.1.3
+X-Kong-Proxy-Latency: 4
+X-Kong-Upstream-Latency: 2
+
+Hello World, Benigno, Canary Release
+
+
+while [ 1 ]; do curl http://192.168.99.231:30688/benignoroute; sleep 1; echo; done
+
+
+Registering the Kong Ingress - magnanimoroute.yaml
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: magnanimoroute
+  annotations:
+    konghq.com/strip-path: "true"
+spec:
+  rules:
+  - http:
+      paths:
+        - path: /magnanimoroute
+          backend:
+            serviceName: magnanimo
+            servicePort: 4000
+
+
+$ kubectl apply -f magnanimoroute.yml
+
+Testing the Ingress
+$ http 192.168.99.231:30688/magnanimoroute
+HTTP/1.1 200 OK
+Connection: keep-alive
+Content-Length: 36
+Content-Type: text/html; charset=utf-8
+Date: Wed, 16 Sep 2020 20:37:22 GMT
+Server: Werkzeug/1.0.1 Python/3.8.3
+Via: kong/2.1.3
+X-Kong-Proxy-Latency: 4
+X-Kong-Upstream-Latency: 2
+
+Hello World, Benigno, Canary Release
+
+
+while [ 1 ]; do curl http://192.168.99.231:30688/magnanimoroute/hw3; sleep 1; echo; done
 

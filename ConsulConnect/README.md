@@ -1,6 +1,6 @@
-# Consul Connect Service Mesh and <p> Kong Enterprise
+# Consul Connect Service Mesh and <p> Kong for Kubernetes
 
-Consul Connect is one of the main Service Mesh implementations in the marketplace today. Along with Kong Enterprise, we can expose the Service Mesh through APIs to external Consumers as well as protecting it with several policies including Rate Limiting, API Keys, OAuth/OIDC grants, Log Processing, Tracing, etc.
+Consul Connect is one of the main Service Mesh implementations in the marketplace today. Along with Kong for Kubernetes, we can expose the Service Mesh through APIs to external Consumers as well as protecting it with several policies including Rate Limiting, API Keys, OAuth/OIDC grants, Log Processing, Tracing, etc.
 
 The following picture describes the Ingress Gateway, Ingress Controller and Service Mesh architecture.
 ![Architecture](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/ConsulConnect/artifacts/architecture.png)
@@ -8,7 +8,7 @@ The following picture describes the Ingress Gateway, Ingress Controller and Serv
 
 #  System Requirements
 
-- A Kubernetes Cluster. This exercise was done on an AWS EKS Cluster. Both Consul Connect and Kong Enterprise support any Kubernetes distribution.
+- A Kubernetes Cluster. This exercise was done on an AWS EKS Cluster. Both Consul Connect and Kong support any Kubernetes distribution.
 - kubectl
 - Helm 3.x
 - Consul CLI
