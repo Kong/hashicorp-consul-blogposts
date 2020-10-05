@@ -25,7 +25,7 @@ The following picture describes the Ingress Gateway, Ingress Controller and Serv
 helm repo add hashicorp https://helm.releases.hashicorp.com
 </pre>
 
-2. Use the following [YAML file](https://github.com/hashicorp/consul-kong-ingress-gateway/blob/master/artifacts/consul-connect.yml) to install Consul Connect.
+2. Use the following [YAML file](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/consul-values.yml) to install Consul Connect.
 
 <pre>
 global:
