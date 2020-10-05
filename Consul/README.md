@@ -157,7 +157,8 @@ Hello World, Benigno
 
 
 4. Check the Consul Service
-<p>Since we have set the synchronization between Kubernetes and Consul services we should be able Benigno already registered
+
+Since we have set the synchronization between Kubernetes and Consul services we should be able Benigno already registered
 <pre>
 kubectl port-forward service/benigno-v1 5000:5000
 </pre>
