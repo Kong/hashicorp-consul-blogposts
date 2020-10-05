@@ -277,7 +277,7 @@ $ http abc541cc57000442cba78705b2e897cd-1988459246.us-west-2.elb.amazonaws.com:8
 a1c9f2cf-d449-4779-bffb-567e5768cbd4
 </pre>
 
-Use the id to create the Kong Service and Kong Route:
+Use the id to create the Kong Service and Kong Route. Notice that the Kong Service refers to the FQDN of the Kubernetes Service <pre>web-sidecar</pre> previously deployed:
 <pre>
 http abc541cc57000442cba78705b2e897cd-1988459246.us-west-2.elb.amazonaws.com:8001/services name=sidecarservice \
 url='https://web-sidecar.default.svc.cluster.local:20000' \
