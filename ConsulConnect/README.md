@@ -107,7 +107,7 @@ This exercise will use the same Web and API microservices explored in [HashiCorp
 
 1. Deploy Web and API Microservices
 
-Use the following declarations to deploy both microservices, [Web](https://github.com/hashicorp/consul-kong-ingress-gateway/blob/master/artifacts/web.yml) and [API](https://github.com/hashicorp/consul-kong-ingress-gateway/blob/master/artifacts/api.yml)
+Use the following declarations to deploy both microservices, [Web](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/ConsulConnect/artifacts/web.yml) and [API](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/ConsulConnect/artifacts/web.yml)
 
 After the deployment you should see the new Kubernetes Pods as well as the new Consul Connect Services.
 <pre>
