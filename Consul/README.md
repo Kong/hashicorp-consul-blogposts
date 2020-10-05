@@ -30,19 +30,12 @@ helm repo add hashicorp https://helm.releases.hashicorp.com
 <pre>
 global:
   datacenter: dc1
-  image: "consul:1.8.3"
-  imageK8S: "hashicorp/consul-k8s:0.18.1"
-  imageEnvoy: "envoyproxy/envoy-alpine:v1.14.4"
+  image: "consul:1.8.4"
 
 # Expose the Consul UI through this LoadBalancer
 ui:
   service:
     type: LoadBalancer
-
-# Allow Consul to inject the Connect proxy into Kubernetes containers
-connectInject:
-  enabled: true
-
 
 # Configure a Consul client on Kubernetes nodes. GRPC listener is required for Connect.
 client:
@@ -60,7 +53,7 @@ server:
 
 # Sync Kubernetes and Consul services
 syncCatalog:
-  enabled: false
+  enabled: true
 </pre>
 
 3. Create a Namespace for Consul
@@ -70,7 +63,7 @@ syncCatalog:
 4. Install Consul Connect
 
 <pre>
-helm install consul-connect -n hashicorp hashicorp/consul -f consul-connect.yml
+helm install consul-connect -n hashicorp hashicorp/consul -f consul-values.yml
 </pre>
 
 5. Check the installation
