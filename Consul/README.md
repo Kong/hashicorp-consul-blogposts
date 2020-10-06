@@ -276,7 +276,6 @@ ben1.json
 }
 </pre>
 
-Using these templates, [primary](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/ben0.json) and [secondary](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/ben1.json), create declarations for the Consul Service with the Microservices addresses as primary and secondary.
 
 
 3. Register the new Consul Service
@@ -384,7 +383,7 @@ Use <kubectl> to apply it:
 kubectl apply -f benignoservice.yaml
 </pre>
 
-sss
+
 ## Step 5: Kong for Kubernetes (K4K8S) Installation
 1. Install Kong for Kubernetes
 
