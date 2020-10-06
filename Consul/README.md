@@ -541,7 +541,7 @@ The return message is coming from Kong for Kubernetes, saying there's no API def
 
 ## Step 6: Define Kong Ingress
 
-1. Create an Ingress using this [declaration](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/ben0.json):
+1. Create an Ingress using this [declaration](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/benignoroute.yaml):
 <pre>
 apiVersion: extensions/v1beta1
 kind: Ingress
@@ -558,9 +558,12 @@ spec:
           backend:
             serviceName: benigno1
             servicePort: 5000
+</pre>
 
-
-$ kubectl apply -f benignoroute.yml
+Use <kubectl> to apply it:
+<pre>
+kubectl apply -f benignoroute.yaml
+</pre>
 
 Testing the Ingress
 $ http 192.168.99.231:30688/benignoroute
