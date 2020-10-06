@@ -280,7 +280,12 @@ ben1.json
 
 3. Register the new Consul Service
 
-Register the Consul Service using the Consul API:
+Open a terminal and expose the Benigno Service:
+<pre>
+kubectl port-forward service/consul-connect-consul-server -n hashicorp 8500:8500
+</pre>
+
+Open another terminal to register the Consul Service using the Consul API:
 <pre>
 http put :8500/v1/agent/service/register < ben0.json
 http put :8500/v1/agent/service/register < ben1.json
