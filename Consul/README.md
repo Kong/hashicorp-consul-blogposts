@@ -17,7 +17,7 @@ The following picture describes the Ingress Gateway, Ingress Controller and Serv
 
 #  Installation Process
 
-## Step 1: Consul Connect Installation
+## Step 1: Consul Installation
 
 1. Add HashiCorp repo to your local Helm installation.
 
@@ -407,7 +407,7 @@ kube-system   kube-dns               ClusterIP      10.100.0.10      <none>     
 </pre>
 
 
-## Step 3: Configure Consul DNS
+## Step 4: Configure Consul DNS
 <pre>
 $ kubectl get service consul-consul-dns -n hashicorp -o jsonpath='{.spec.clusterIP}'
 10.100.245.135
@@ -465,7 +465,7 @@ metadata:
   uid: 698c5d0c-998e-4aa4-9857-67958eeee25a
 </pre>
 
-## Step 3: Kong for Kubernetes (K4K8S) Installation
+## Step 5: Kong for Kubernetes (K4K8S) Installation
 1. Install Kong for Kubernetes
 
 Add Kong Repository:
@@ -480,54 +480,40 @@ kubectl create namespace kong
 
 Install Kong for Kubernetes with <b>Helm</b>
 <pre>
-helm install kong kong/kong -n kong \
---set admin.enabled=true \
---set admin.type=LoadBalancer \
---set admin.http.enabled=true \
---set env.database=postgres \
---set postgresql.enabled=true \
---set postgresql.postgresqlUsername=kong \
---set postgresql.postgresqlDatabase=kong \
---set postgresql.postgresqlPassword=kong \
---set ingressController.enabled=false \
---set ingressController.installCRDs=false
+helm install kong kong/kong -n kong --set ingressController.installCRDs=false
 </pre>
 
 2. Check the installation
 
 <pre>
 $ kubectl get pod --all-namespaces
-NAMESPACE     NAME                                                              READY   STATUS      RESTARTS   AGE
-default       api-deployment-v1-85cc8c9977-jbbv2                                3/3     Running     0          28m
-default       web-deployment-76dcfdcc8f-2dvn6                                   3/3     Running     0          27m
-hashicorp     consul-connect-consul-connect-injector-webhook-deployment-c6prh   1/1     Running     0          32m
-hashicorp     consul-connect-consul-ct4pw                                       1/1     Running     0          32m
-hashicorp     consul-connect-consul-server-0                                    1/1     Running     0          32m
-kong          kong-kong-5cd475f445-nsdcq                                        1/1     Running     0          77s
-kong          kong-kong-init-migrations-bwhqd                                   0/1     Completed   0          76s
-kong          kong-postgresql-0                                                 1/1     Running     0          76s
-kube-system   aws-node-8w4f4                                                    1/1     Running     0          47m
-kube-system   coredns-5946c5d67c-kfzn8                                          1/1     Running     0          53m
-kube-system   coredns-5946c5d67c-qrpzv                                          1/1     Running     0          53m
-kube-system   kube-proxy-vq6td                                                  1/1     Running     0          47m
+NAMESPACE     NAME                                          READY   STATUS    RESTARTS   AGE
+default       benigno-v1-fd4567d95-s8dtg                    1/1     Running   0          21h
+default       benigno-v2-b977c867b-t8bqr                    1/1     Running   0          29m
+hashicorp     consul-consul-server-0                        1/1     Running   0          21h
+hashicorp     consul-consul-sync-catalog-7f7fb45954-zfj96   1/1     Running   0          21h
+hashicorp     consul-consul-znr6t                           1/1     Running   0          21h
+kong          kong-kong-6f784b6686-szd6v                    2/2     Running   0          29s
+kube-system   aws-node-wf2rj                                1/1     Running   0          21h
+kube-system   coredns-5946c5d67c-5cvlk                      1/1     Running   0          21h
+kube-system   coredns-5946c5d67c-hq7pf                      1/1     Running   0          21h
+kube-system   kube-proxy-5pv5g                              1/1     Running   0          21h
 </pre>
 
 <pre>
 $ kubectl get service --all-namespaces
-NAMESPACE     NAME                                         TYPE           CLUSTER-IP       EXTERNAL-IP                                                               PORT(S)                                                                   AGE
-default       kubernetes                                   ClusterIP      10.100.0.1       <none>                                                                    443/TCP                                                                   53m
-default       web-sidecar                                  ClusterIP      10.100.45.250    <none>                                                                    20000/TCP                                                                 27m
-hashicorp     consul-connect-consul-connect-injector-svc   ClusterIP      10.100.242.102   <none>                                                                    443/TCP                                                                   31m
-hashicorp     consul-connect-consul-dns                    ClusterIP      10.100.48.214    <none>                                                                    53/TCP,53/UDP                                                             31m
-hashicorp     consul-connect-consul-server                 ClusterIP      None             <none>                                                                    8500/TCP,8301/TCP,8301/UDP,8302/TCP,8302/UDP,8300/TCP,8600/TCP,8600/UDP   31m
-hashicorp     consul-connect-consul-ui                     LoadBalancer   10.100.199.74    a2f6deb05428549a5bac58042dcd796f-1259403994.us-west-2.elb.amazonaws.com   80:30493/TCP                                                              31m
-kong          kong-kong-admin                              LoadBalancer   10.100.127.202   abc541cc57000442cba78705b2e897cd-1988459246.us-west-2.elb.amazonaws.com   8001:31301/TCP,8444:31442/TCP                                             34s
-kong          kong-kong-proxy                              LoadBalancer   10.100.31.70     ac9c11495f0084fa490fb3604a7fa17f-190377106.us-west-2.elb.amazonaws.com    80:30579/TCP,443:30425/TCP                                                34s
-kong          kong-postgresql                              ClusterIP      10.100.168.65    <none>                                                                    5432/TCP                                                                  34s
-kong          kong-postgresql-headless                     ClusterIP      None             <none>                                                                    5432/TCP                                                                  34s
-kube-system   kube-dns                                     ClusterIP      10.100.0.10      <none>                                                                    53/UDP,53/TCP                                                             53m
+NAMESPACE     NAME                   TYPE           CLUSTER-IP       EXTERNAL-IP                                                              PORT(S)                                                                   AGE
+default       benigno-v1             ClusterIP      10.100.131.200   <none>                                                                   5000/TCP                                                                  21h
+default       benigno-v2             ClusterIP      10.100.164.54    <none>                                                                   5000/TCP                                                                  29m
+default       kubernetes             ClusterIP      10.100.0.1       <none>                                                                   443/TCP                                                                   21h
+hashicorp     benigno1               ExternalName   <none>           benigno1.service.consul                                                  <none>                                                                    7m10s
+hashicorp     consul                 ExternalName   <none>           consul.service.consul                                                    <none>                                                                    21h
+hashicorp     consul-consul-dns      ClusterIP      10.100.245.135   <none>                                                                   53/TCP,53/UDP                                                             21h
+hashicorp     consul-consul-server   ClusterIP      None             <none>                                                                   8500/TCP,8301/TCP,8301/UDP,8302/TCP,8302/UDP,8300/TCP,8600/TCP,8600/UDP   21h
+hashicorp     consul-consul-ui       LoadBalancer   10.100.76.229    a8c100f0db5ad4fa69037c942e8b6391-594908802.us-west-2.elb.amazonaws.com   80:32109/TCP                                                              21h
+kong          kong-kong-proxy        LoadBalancer   10.100.48.125    af52b0b3c274c4959ac4e8b5cef00b01-105761001.us-west-2.elb.amazonaws.com   80:31157/TCP,443:31359/TCP                                                36s
+kube-system   kube-dns               ClusterIP      10.100.0.10      <none>                                                                   53/UDP,53/TCP                                                             21h
 </pre>
-
 
 
 3. Check the Kong Proxy
@@ -535,12 +521,12 @@ kube-system   kube-dns                                     ClusterIP      10.100
 Hit Kong Proxy through the Load Balancer provisioned by AWS:
 
 <pre>
-$ http ac9c11495f0084fa490fb3604a7fa17f-190377106.us-west-2.elb.amazonaws.com
+$ http af52b0b3c274c4959ac4e8b5cef00b01-105761001.us-west-2.elb.amazonaws.com
 HTTP/1.1 404 Not Found
 Connection: keep-alive
 Content-Length: 48
 Content-Type: application/json; charset=utf-8
-Date: Mon, 05 Oct 2020 13:28:52 GMT
+Date: Tue, 06 Oct 2020 12:43:24 GMT
 Server: kong/2.1.4
 X-Kong-Response-Latency: 0
 
@@ -552,52 +538,46 @@ X-Kong-Response-Latency: 0
 The return message is coming from Kong for Kubernetes, saying there's no API defined yet.
 
 
-4. Check the Kong REST Admin port
+
+## Step 6: Define Kong Ingress
+
+1. Create an Ingress using this [declaration](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/ben0.json):
 <pre>
-$ http abc541cc57000442cba78705b2e897cd-1988459246.us-west-2.elb.amazonaws.com:8001 | jq .version
-"2.1.4"
-</pre>
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: benignoroute
+  namespace: hashicorp
+  annotations:
+    konghq.com/strip-path: "true"
+spec:
+  rules:
+  - http:
+      paths:
+        - path: /benignoroute
+          backend:
+            serviceName: benigno1
+            servicePort: 5000
 
 
+$ kubectl apply -f benignoroute.yml
+
+Testing the Ingress
+$ http 192.168.99.231:30688/benignoroute
+HTTP/1.1 200 OK
+Connection: keep-alive
+Content-Length: 36
+Content-Type: text/html; charset=utf-8
+Date: Wed, 16 Sep 2020 20:37:22 GMT
+Server: Werkzeug/1.0.1 Python/3.8.3
+Via: kong/2.1.3
+X-Kong-Proxy-Latency: 4
+X-Kong-Upstream-Latency: 2
+
+Hello World, Benigno, Canary Release
 
 
-## Step 4: Consul Digital Certificates and Private Key
-
-Issue the Digital Certificates and Private Key consuming the Consul specific APIs:
-
-1. On a terminal expose the Consul Server Service:
-<pre>
-$ kubectl port-forward service/consul-connect-consul-server -n hashicorp 8500:8500
-Forwarding from 127.0.0.1:8500 -> 8500
-Forwarding from [::1]:8500 -> 8500
-Handling connection for 8500
-</pre>
-
-2. On another terminal run the following command to get the Digital Certificates and Private Key:
-<pre>
-http :8500/v1/connect/ca/roots | jq -r .Roots[].RootCert > ca.crt
-http :8500/v1/agent/connect/ca/leaf/web | jq -r .CertPEM > cert.pem
-http :8500/v1/agent/connect/ca/leaf/web | jq -r .PrivateKeyPEM > cert.key
-</pre>
-
-After running the command you should see three files:
-<pre>
-ca.crt: CA's Digital Certificate
-cert.pem: Server Digital Certificate
-cert.key: Server Private Key
-</pre>
-
-
-
-## Step 5: Define Kong Service and Route
-
-1. Insert the Digital Certificates and Private Key in Kong:
-<pre>
-$ curl -sX POST http://abc541cc57000442cba78705b2e897cd-1988459246.us-west-2.elb.amazonaws.com:8001/ca_certificates -F "cert=@./ca.crt"
-
-$ curl -sX POST http://abc541cc57000442cba78705b2e897cd-1988459246.us-west-2.elb.amazonaws.com:8001/certificates \
-    -F "cert=@./cert.pem" \
-    -F "key=@./cert.key"
+while [ 1 ]; do curl http://192.168.99.231:30688/benignoroute; sleep 1; echo; done
 </pre>
 
 2. Create a Kong Service based on the Sidecar

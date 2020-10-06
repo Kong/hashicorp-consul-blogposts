@@ -1,0 +1,15 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: benignoroute
+  namespace: hashicorp
+  annotations:
+    konghq.com/strip-path: "true"
+spec:
+  rules:
+  - http:
+      paths:
+        - path: /benignoroute
+          backend:
+            serviceName: benigno1
+            servicePort: 5000
