@@ -310,22 +310,21 @@ Using these templates, [primary](https://github.com/Kong/hashicorp-consul-blogpo
 
 3. Register the new Consul Service
 
-Registr the Consul Service using the Consul API:
+Register the Consul Service using the Consul API:
 <pre>
 http put :8500/v1/agent/service/register < ben0.json
 http put :8500/v1/agent/service/register < ben1.json
 </pre>
 
-http :8500/v1/agent/services
-http :8500/v1/agent/service/ben0
-http :8500/v1/agent/service/ben1
 
+Check the Service with:
+<pre>
 $ http :8500/v1/agent/health/service/name/benigno1
 HTTP/1.1 200 OK
 Content-Encoding: gzip
-Content-Length: 249
+Content-Length: 256
 Content-Type: application/json
-Date: Wed, 16 Sep 2020 18:55:12 GMT
+Date: Tue, 06 Oct 2020 12:35:15 GMT
 Vary: Accept-Encoding
 X-Consul-Reason: passing
 
@@ -334,36 +333,7 @@ X-Consul-Reason: passing
         "AggregatedStatus": "passing",
         "Checks": [],
         "Service": {
-            "Address": "172.17.0.9",
-            "EnableTagOverride": false,
-            "ID": "ben1",
-            "Meta": {},
-            "Port": 5000,
-            "Service": "benigno1",
-            "TaggedAddresses": {
-                "lan_ipv4": {
-                    "Address": "172.17.0.9",
-                    "Port": 5000
-                },
-                "wan_ipv4": {
-                    "Address": "172.17.0.9",
-                    "Port": 5000
-                }
-            },
-            "Tags": [
-                "secondary"
-            ],
-            "Weights": {
-                "Passing": 99,
-                "Warning": 1
-            }
-        }
-    },
-    {
-        "AggregatedStatus": "passing",
-        "Checks": [],
-        "Service": {
-            "Address": "172.17.0.6",
+            "Address": "192.168.1.58",
             "EnableTagOverride": false,
             "ID": "ben0",
             "Meta": {},
@@ -371,11 +341,11 @@ X-Consul-Reason: passing
             "Service": "benigno1",
             "TaggedAddresses": {
                 "lan_ipv4": {
-                    "Address": "172.17.0.6",
+                    "Address": "192.168.1.58",
                     "Port": 5000
                 },
                 "wan_ipv4": {
-                    "Address": "172.17.0.6",
+                    "Address": "192.168.1.58",
                     "Port": 5000
                 }
             },
@@ -387,22 +357,54 @@ X-Consul-Reason: passing
                 "Warning": 1
             }
         }
+    },
+    {
+        "AggregatedStatus": "passing",
+        "Checks": [],
+        "Service": {
+            "Address": "192.168.29.24",
+            "EnableTagOverride": false,
+            "ID": "ben1",
+            "Meta": {},
+            "Port": 5000,
+            "Service": "benigno1",
+            "TaggedAddresses": {
+                "lan_ipv4": {
+                    "Address": "192.168.29.24",
+                    "Port": 5000
+                },
+                "wan_ipv4": {
+                    "Address": "192.168.29.24",
+                    "Port": 5000
+                }
+            },
+            "Tags": [
+                "secondary"
+            ],
+            "Weights": {
+                "Passing": 99,
+                "Warning": 1
+            }
+        }
     }
 ]
+</pre>
 
+Notice that Consul has declared a new External Kubernentes Service for <b>benigno1</b>
 
+<pre>
 $ kubectl get service --all-namespaces
-NAMESPACE     NAME                   TYPE           CLUSTER-IP      EXTERNAL-IP               PORT(S)                                                                   AGE
-default       benigno-v1             ClusterIP      10.109.43.73    <none>                    5000/TCP                                                                  29h
-default       benigno-v2             ClusterIP      10.100.80.136   <none>                    5000/TCP                                                                  29h
-default       kubernetes             ClusterIP      10.96.0.1       <none>                    443/TCP                                                                   30h
-default       magnanimo              ClusterIP      10.109.1.23     <none>                    4000/TCP                                                                  87m
-hashicorp     benigno1               ExternalName   <none>          benigno1.service.consul   <none>                                                                    111m
-hashicorp     consul                 ExternalName   <none>          consul.service.consul     <none>                                                                    29h
-hashicorp     consul-consul-dns      ClusterIP      10.105.0.130    <none>                    53/TCP,53/UDP                                                             29h
-hashicorp     consul-consul-server   ClusterIP      None            <none>                    8500/TCP,8301/TCP,8301/UDP,8302/TCP,8302/UDP,8300/TCP,8600/TCP,8600/UDP   29h
-hashicorp     consul-consul-ui       LoadBalancer   10.104.155.34   <pending>                 80:32379/TCP                                                              29h
-kube-system   kube-dns               ClusterIP      10.96.0.10      <none>                    53/UDP,53/TCP,9153/TCP     
+NAMESPACE     NAME                   TYPE           CLUSTER-IP       EXTERNAL-IP                                                              PORT(S)                                                                   AGE
+default       benigno-v1             ClusterIP      10.100.131.200   <none>                                                                   5000/TCP                                                                  21h
+default       benigno-v2             ClusterIP      10.100.164.54    <none>                                                                   5000/TCP                                                                  23m
+default       kubernetes             ClusterIP      10.100.0.1       <none>                                                                   443/TCP                                                                   21h
+hashicorp     benigno1               ExternalName   <none>           benigno1.service.consul                                                  <none>                                                                    75s
+hashicorp     consul                 ExternalName   <none>           consul.service.consul                                                    <none>                                                                    21h
+hashicorp     consul-consul-dns      ClusterIP      10.100.245.135   <none>                                                                   53/TCP,53/UDP                                                             21h
+hashicorp     consul-consul-server   ClusterIP      None             <none>                                                                   8500/TCP,8301/TCP,8301/UDP,8302/TCP,8302/UDP,8300/TCP,8600/TCP,8600/UDP   21h
+hashicorp     consul-consul-ui       LoadBalancer   10.100.76.229    a8c100f0db5ad4fa69037c942e8b6391-594908802.us-west-2.elb.amazonaws.com   80:32109/TCP                                                              21h
+kube-system   kube-dns               ClusterIP      10.100.0.10      <none>                                                                   53/UDP,53/TCP                                                             21h
+</pre>
 
 
 ## Step 3: Configure Consul DNS
