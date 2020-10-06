@@ -95,6 +95,66 @@ Check the Consul Connect services redirecting your browser to Consul UI:
 ![ConsulConnect](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/ConsulConnect.png)
 
 
+## Step 4: Configure Consul DNS
+<pre>
+$ kubectl get service consul-consul-dns -n hashicorp -o jsonpath='{.spec.clusterIP}'
+10.100.245.135
+</pre>
+
+<pre>
+$ kubectl edit configmap coredns -n kube-system
+# Please edit the object below. Lines beginning with a '#' will be ignored,
+# and an empty file will abort the edit. If an error occurs while saving this file will be
+# reopened with the relevant failures.
+#
+apiVersion: v1
+data:
+  Corefile: |
+    .:53 {
+        errors
+        health {
+           lameduck 5s
+        }
+        ready
+        kubernetes cluster.local in-addr.arpa ip6.arpa {
+           pods insecure
+           fallthrough in-addr.arpa ip6.arpa
+           ttl 30
+        }
+        prometheus :9153
+        forward . /etc/resolv.conf
+        cache 30
+        loop
+        reload
+        loadbalance
+    }
+    consul {
+        errors
+        cache 30
+        forward . 10.100.245.135
+    }
+kind: ConfigMap
+metadata:
+  creationTimestamp: "2020-06-19T13:42:16Z"
+  managedFields:
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:data:
+        .: {}
+        f:Corefile: {}
+    manager: kubeadm
+    operation: Update
+    time: "2020-06-19T13:42:16Z"
+  name: coredns
+  namespace: kube-system
+  resourceVersion: "178"
+  selfLink: /api/v1/namespaces/kube-system/configmaps/coredns
+  uid: 698c5d0c-998e-4aa4-9857-67958eeee25a
+</pre>
+
+
+
 ## Step 2: Deploy Sample Microservice and Canary
 
 Canary description
@@ -258,7 +318,7 @@ kubectl apply -f service_benigno_rc.yaml
 Since, the two Microservices have been deployed, a new Consul Service, abstracting the two Microservices addresses, should be defined. The addresses can be obtained using the Consul APIs again:
 <pre>
 http :8500/v1/catalog/service/benigno-v1-default | jq -r .[].ServiceAddress
-192.168.1.58
+192.168.26.61
 </pre>
 
 and
@@ -279,7 +339,7 @@ ben0.json
   "ID": "ben0",
   "Name": "benigno1",
   "Tags": ["primary"],
-  "Address": "192.168.1.58",
+  "Address": "192.168.26.61",
   "Port": 5000,
   "weights": {
     "passing": 1,
@@ -407,63 +467,6 @@ kube-system   kube-dns               ClusterIP      10.100.0.10      <none>     
 </pre>
 
 
-## Step 4: Configure Consul DNS
-<pre>
-$ kubectl get service consul-consul-dns -n hashicorp -o jsonpath='{.spec.clusterIP}'
-10.100.245.135
-</pre>
-
-<pre>
-$ kubectl edit configmap coredns -n kube-system
-# Please edit the object below. Lines beginning with a '#' will be ignored,
-# and an empty file will abort the edit. If an error occurs while saving this file will be
-# reopened with the relevant failures.
-#
-apiVersion: v1
-data:
-  Corefile: |
-    .:53 {
-        errors
-        health {
-           lameduck 5s
-        }
-        ready
-        kubernetes cluster.local in-addr.arpa ip6.arpa {
-           pods insecure
-           fallthrough in-addr.arpa ip6.arpa
-           ttl 30
-        }
-        prometheus :9153
-        forward . /etc/resolv.conf
-        cache 30
-        loop
-        reload
-        loadbalance
-    }
-    consul {
-        errors
-        cache 30
-        forward . 10.100.245.135
-    }
-kind: ConfigMap
-metadata:
-  creationTimestamp: "2020-06-19T13:42:16Z"
-  managedFields:
-  - apiVersion: v1
-    fieldsType: FieldsV1
-    fieldsV1:
-      f:data:
-        .: {}
-        f:Corefile: {}
-    manager: kubeadm
-    operation: Update
-    time: "2020-06-19T13:42:16Z"
-  name: coredns
-  namespace: kube-system
-  resourceVersion: "178"
-  selfLink: /api/v1/namespaces/kube-system/configmaps/coredns
-  uid: 698c5d0c-998e-4aa4-9857-67958eeee25a
-</pre>
 
 
 
