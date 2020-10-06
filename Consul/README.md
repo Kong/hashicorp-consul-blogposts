@@ -93,7 +93,7 @@ Check the Consul Connect services redirecting your browser to Consul UI:
 ![ConsulConnect](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/ConsulConnect.png)
 
 
-## Step 4: Configure Consul DNS
+## Step 2: Configure Consul DNS
 <pre>
 kubectl get service consul-connect-consul-dns -n hashicorp -o jsonpath='{.spec.clusterIP}'
 10.100.152.144
@@ -153,7 +153,7 @@ metadata:
 
 
 
-## Step 2: Deploy Sample Microservice and Canary
+## Step 3: Deploy Sample Microservice and Canary
 
 Canary description
 
@@ -222,7 +222,7 @@ kubectl apply -f service_benigno_rc.yaml
 </pre>
 
 
-## Step 3: Register the Consul Service for both Microservices releases
+## Step 4: Register the Consul Service for both Microservices releases
 
 1. Get the Microservices Services ClusterIP addresses
 
