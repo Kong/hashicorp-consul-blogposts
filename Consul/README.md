@@ -485,7 +485,7 @@ Address: 10.100.114.214
 
 ## Step 6: Define Kong Ingress
 
-1. Create an Ingress using this [declaration](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/benignoroute.yaml):
+1. Create an Ingress using this [declaration](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/benignoroute.yaml). Notice it refers to the External Service created previously:
 <pre>
 apiVersion: extensions/v1beta1
 kind: Ingress
