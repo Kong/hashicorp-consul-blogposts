@@ -443,7 +443,7 @@ data:
     consul {
         errors
         cache 30
-        forward . 10.105.0.130
+        forward . 10.100.245.135
     }
 kind: ConfigMap
 metadata:
@@ -464,6 +464,8 @@ metadata:
   selfLink: /api/v1/namespaces/kube-system/configmaps/coredns
   uid: 698c5d0c-998e-4aa4-9857-67958eeee25a
 </pre>
+
+
 
 ## Step 5: Kong for Kubernetes (K4K8S) Installation
 1. Install Kong for Kubernetes
@@ -539,6 +541,28 @@ The return message is coming from Kong for Kubernetes, saying there's no API def
 
 
 
+4. Check Consul DNS
+
+Open a terminal inside K4K8S pod to run check the <b>benigno1</b> naming resolution with a simple <nslookup> command:
+<pre>
+$ kubectl exec -ti kong-kong-6f784b6686-szd6v -n kong -- /bin/sh
+Defaulting container name to ingress-controller.
+Use 'kubectl describe pod/kong-kong-6f784b6686-szd6v -n kong' to see all of the containers in this pod.
+/ $ nslookup benigno1.service.consul
+Server:		10.100.0.10
+Address:	10.100.0.10:53
+
+Name:	benigno1.service.consul
+Address: 192.168.1.58
+Name:	benigno1.service.consul
+Address: 192.168.29.24
+
+
+/ $ exit
+</pre>
+
+
+
 ## Step 6: Define Kong Ingress
 
 1. Create an Ingress using this [declaration](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/benignoroute.yaml):
@@ -549,6 +573,7 @@ metadata:
   name: benignoroute
   namespace: hashicorp
   annotations:
+    kubernetes.io/ingress.class: kong
     konghq.com/strip-path: "true"
 spec:
   rules:
@@ -566,7 +591,8 @@ kubectl apply -f benignoroute.yaml
 </pre>
 
 Testing the Ingress
-$ http 192.168.99.231:30688/benignoroute
+<pre>
+http af52b0b3c274c4959ac4e8b5cef00b01-105761001.us-west-2.elb.amazonaws.com/benignoroute
 HTTP/1.1 200 OK
 Connection: keep-alive
 Content-Length: 36
@@ -578,7 +604,7 @@ X-Kong-Proxy-Latency: 4
 X-Kong-Upstream-Latency: 2
 
 Hello World, Benigno, Canary Release
-
+</pre>
 
 while [ 1 ]; do curl http://192.168.99.231:30688/benignoroute; sleep 1; echo; done
 </pre>
