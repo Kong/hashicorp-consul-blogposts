@@ -378,7 +378,7 @@ spec:
   externalName: benigno1.service.consul
 </pre>
 
-Use <kubectl> to apply it:
+Use <b>kubectl</b> to apply it:
 <pre>
 kubectl apply -f benignoservice.yaml
 </pre>
