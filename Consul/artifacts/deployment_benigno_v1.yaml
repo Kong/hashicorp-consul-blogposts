@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: benigno-v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: benigno
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: benigno
+        version: v1
+    spec:
+      containers:
+      - name: benigno
+        image: claudioacquaviva/benigno
+        ports:
+        - containerPort: 5000

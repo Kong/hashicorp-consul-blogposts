@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: benigno-v1
+  labels:
+    app: benigno-v1
+spec:
+  type: ClusterIP
+  ports:
+  - port: 5000
+    name: http
+  selector:
+    app: benigno
+    version: v1

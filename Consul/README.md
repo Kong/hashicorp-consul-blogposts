@@ -99,7 +99,6 @@ Check the Consul Connect services redirecting your browser to Consul UI:
 
 Canary description
 
-
 1. Deploy Benigno and Canary Microservices
 
 Use the following declarations to deploy both microservices, [Web](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/ConsulConnect/artifacts/web.yml) and [API](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/ConsulConnect/artifacts/web.yml)
@@ -152,7 +151,6 @@ Date: Tue, 15 Sep 2020 13:22:25 GMT
 Server: Werkzeug/1.0.1 Python/3.8.3
 
 Hello World, Benigno
-
 </pre>
 
 
@@ -242,10 +240,332 @@ X-Consul-Lastcontact: 0
 ]
 </pre>
 
-On another terminal send a request to it:
+5. Deploy the Canary Release
 
-![Web&API](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/ConsulConnect/artifacts/ConsulConnectServices.png)
+kubectl apply -f deployment_benigno_rc.yaml
+kubectl apply -f service_benigno_rc.yaml
 
+kubectl port-forward hashicorp-consul-server-0 8500:8500
+
+$ http :8500/v1/catalog/services
+HTTP/1.1 200 OK
+Content-Encoding: gzip
+Content-Length: 122
+Content-Type: application/json
+Date: Tue, 15 Sep 2020 15:05:51 GMT
+Vary: Accept-Encoding
+X-Consul-Effective-Consistency: leader
+X-Consul-Index: 294
+X-Consul-Knownleader: true
+X-Consul-Lastcontact: 0
+
+{
+    "benigno-v1-default": [
+        "k8s"
+    ],
+    "benigno-v2-default": [
+        "k8s"
+    ],
+    "consul": [],
+    "consul-consul-dns-hashicorp": [
+        "k8s"
+    ],
+    "consul-consul-server-hashicorp": [
+        "k8s"
+    ],
+    "kubernetes-default": [
+        "k8s"
+    ],
+    "magnanimo-default": [
+        "k8s"
+    ]
+}
+
+
+$ http :8500/v1/catalog/service/benigno-v1-default
+HTTP/1.1 200 OK
+Content-Encoding: gzip
+Content-Length: 334
+Content-Type: application/json
+Date: Tue, 15 Sep 2020 15:06:16 GMT
+Vary: Accept-Encoding
+X-Consul-Effective-Consistency: leader
+X-Consul-Index: 44
+X-Consul-Knownleader: true
+X-Consul-Lastcontact: 0
+
+[
+    {
+        "Address": "127.0.0.1",
+        "CreateIndex": 44,
+        "Datacenter": "dc1",
+        "ID": "",
+        "ModifyIndex": 44,
+        "Node": "k8s-sync",
+        "NodeMeta": {
+            "external-source": "kubernetes"
+        },
+        "ServiceAddress": "172.17.0.6",
+        "ServiceConnect": {},
+        "ServiceEnableTagOverride": false,
+        "ServiceID": "benigno-v1-default-36cb73f45c0a",
+        "ServiceKind": "",
+        "ServiceMeta": {
+            "external-k8s-ns": "default",
+            "external-source": "kubernetes",
+            "port-http": "5000"
+        },
+        "ServiceName": "benigno-v1-default",
+        "ServicePort": 5000,
+        "ServiceProxy": {
+            "Expose": {},
+            "MeshGateway": {}
+        },
+        "ServiceTags": [
+            "k8s"
+        ],
+        "ServiceWeights": {
+            "Passing": 1,
+            "Warning": 1
+        },
+        "TaggedAddresses": null
+    }
+]
+
+
+$ http :8500/v1/catalog/service/benigno-v2-default
+HTTP/1.1 200 OK
+Content-Encoding: gzip
+Content-Length: 334
+Content-Type: application/json
+Date: Tue, 15 Sep 2020 15:06:40 GMT
+Vary: Accept-Encoding
+X-Consul-Effective-Consistency: leader
+X-Consul-Index: 294
+X-Consul-Knownleader: true
+X-Consul-Lastcontact: 0
+
+[
+    {
+        "Address": "127.0.0.1",
+        "CreateIndex": 294,
+        "Datacenter": "dc1",
+        "ID": "",
+        "ModifyIndex": 294,
+        "Node": "k8s-sync",
+        "NodeMeta": {
+            "external-source": "kubernetes"
+        },
+        "ServiceAddress": "172.17.0.9",
+        "ServiceConnect": {},
+        "ServiceEnableTagOverride": false,
+        "ServiceID": "benigno-v2-default-174c34d4f2ae",
+        "ServiceKind": "",
+        "ServiceMeta": {
+            "external-k8s-ns": "default",
+            "external-source": "kubernetes",
+            "port-http": "5000"
+        },
+        "ServiceName": "benigno-v2-default",
+        "ServicePort": 5000,
+        "ServiceProxy": {
+            "Expose": {},
+            "MeshGateway": {}
+        },
+        "ServiceTags": [
+            "k8s"
+        ],
+        "ServiceWeights": {
+            "Passing": 1,
+            "Warning": 1
+        },
+        "TaggedAddresses": null
+    }
+]
+
+
+
+
+ben0.json
+{
+  "ID": "ben0",
+  "Name": "benigno1",
+  "Tags": ["primary"],
+  "Address": "172.17.0.6",
+  "Port": 5000,
+  "weights": {
+    "passing": 1,
+    "warning": 1
+  }
+}
+
+
+
+
+ben1.json
+{
+  "ID": "ben1",
+  "Name": "benigno1",
+  "Tags": ["secondary"],
+  "Address": "172.17.0.9",
+  "Port": 5000,
+  "weights": {
+    "passing": 99,
+    "warning": 1
+  }
+}
+
+
+
+http put :8500/v1/agent/service/register < ben0.json
+http put :8500/v1/agent/service/register < ben1.json
+
+http :8500/v1/agent/services
+http :8500/v1/agent/service/ben0
+http :8500/v1/agent/service/ben1
+
+$ http :8500/v1/agent/health/service/name/benigno1
+HTTP/1.1 200 OK
+Content-Encoding: gzip
+Content-Length: 249
+Content-Type: application/json
+Date: Wed, 16 Sep 2020 18:55:12 GMT
+Vary: Accept-Encoding
+X-Consul-Reason: passing
+
+[
+    {
+        "AggregatedStatus": "passing",
+        "Checks": [],
+        "Service": {
+            "Address": "172.17.0.9",
+            "EnableTagOverride": false,
+            "ID": "ben1",
+            "Meta": {},
+            "Port": 5000,
+            "Service": "benigno1",
+            "TaggedAddresses": {
+                "lan_ipv4": {
+                    "Address": "172.17.0.9",
+                    "Port": 5000
+                },
+                "wan_ipv4": {
+                    "Address": "172.17.0.9",
+                    "Port": 5000
+                }
+            },
+            "Tags": [
+                "secondary"
+            ],
+            "Weights": {
+                "Passing": 99,
+                "Warning": 1
+            }
+        }
+    },
+    {
+        "AggregatedStatus": "passing",
+        "Checks": [],
+        "Service": {
+            "Address": "172.17.0.6",
+            "EnableTagOverride": false,
+            "ID": "ben0",
+            "Meta": {},
+            "Port": 5000,
+            "Service": "benigno1",
+            "TaggedAddresses": {
+                "lan_ipv4": {
+                    "Address": "172.17.0.6",
+                    "Port": 5000
+                },
+                "wan_ipv4": {
+                    "Address": "172.17.0.6",
+                    "Port": 5000
+                }
+            },
+            "Tags": [
+                "primary"
+            ],
+            "Weights": {
+                "Passing": 1,
+                "Warning": 1
+            }
+        }
+    }
+]
+
+
+$ kubectl get service --all-namespaces
+NAMESPACE     NAME                   TYPE           CLUSTER-IP      EXTERNAL-IP               PORT(S)                                                                   AGE
+default       benigno-v1             ClusterIP      10.109.43.73    <none>                    5000/TCP                                                                  29h
+default       benigno-v2             ClusterIP      10.100.80.136   <none>                    5000/TCP                                                                  29h
+default       kubernetes             ClusterIP      10.96.0.1       <none>                    443/TCP                                                                   30h
+default       magnanimo              ClusterIP      10.109.1.23     <none>                    4000/TCP                                                                  87m
+hashicorp     benigno1               ExternalName   <none>          benigno1.service.consul   <none>                                                                    111m
+hashicorp     consul                 ExternalName   <none>          consul.service.consul     <none>                                                                    29h
+hashicorp     consul-consul-dns      ClusterIP      10.105.0.130    <none>                    53/TCP,53/UDP                                                             29h
+hashicorp     consul-consul-server   ClusterIP      None            <none>                    8500/TCP,8301/TCP,8301/UDP,8302/TCP,8302/UDP,8300/TCP,8600/TCP,8600/UDP   29h
+hashicorp     consul-consul-ui       LoadBalancer   10.104.155.34   <pending>                 80:32379/TCP                                                              29h
+kube-system   kube-dns               ClusterIP      10.96.0.10      <none>                    53/UDP,53/TCP,9153/TCP     
+
+
+## Step 3: Configure Consul DNS
+<pre>
+$ kubectl get service consul-consul-dns -n hashicorp -o jsonpath='{.spec.clusterIP}'
+10.100.245.135
+</pre>
+
+<pre>
+$ kubectl edit configmap coredns -n kube-system
+# Please edit the object below. Lines beginning with a '#' will be ignored,
+# and an empty file will abort the edit. If an error occurs while saving this file will be
+# reopened with the relevant failures.
+#
+apiVersion: v1
+data:
+  Corefile: |
+    .:53 {
+        errors
+        health {
+           lameduck 5s
+        }
+        ready
+        kubernetes cluster.local in-addr.arpa ip6.arpa {
+           pods insecure
+           fallthrough in-addr.arpa ip6.arpa
+           ttl 30
+        }
+        prometheus :9153
+        forward . /etc/resolv.conf
+        cache 30
+        loop
+        reload
+        loadbalance
+    }
+    consul {
+        errors
+        cache 30
+        forward . 10.105.0.130
+    }
+kind: ConfigMap
+metadata:
+  creationTimestamp: "2020-06-19T13:42:16Z"
+  managedFields:
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:data:
+        .: {}
+        f:Corefile: {}
+    manager: kubeadm
+    operation: Update
+    time: "2020-06-19T13:42:16Z"
+  name: coredns
+  namespace: kube-system
+  resourceVersion: "178"
+  selfLink: /api/v1/namespaces/kube-system/configmaps/coredns
+  uid: 698c5d0c-998e-4aa4-9857-67958eeee25a
+</pre>
 
 ## Step 3: Kong for Kubernetes (K4K8S) Installation
 1. Install Kong for Kubernetes
