@@ -101,9 +101,9 @@ Canary description
 
 1. Deploy Sample Microservice
 
-Use the following declarations to deploy both microservices, [Sample Deployment](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/deployment_benigno_v1.yaml) and [Sample Service](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/service_benigno.yaml)
+Use the following declarations to deploy the Sample Microservice, [Sample Deployment](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/deployment_benigno_v1.yaml) and [Sample Service](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/service_benigno.yaml)
 
-After the deployment you should see the new Kubernetes Pods as well as the new Consul Connect Services.
+After the deployment you should see the new Kubernetes Pods as well as the new Consul Services.
 <pre>
 kubectl apply -f deployment_benigno_v1.yaml
 kubectl apply -f service_benigno.yaml
