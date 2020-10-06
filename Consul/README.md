@@ -364,7 +364,7 @@ X-Consul-Reason: passing
 
 4. Register the Kubernetes Service
 
-The Kubernetes [service](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/benignoservice.yaml) defines an internal reference for the Consul Service:
+The Kubernetes [service](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/externalservice_benigno.yaml) defines an internal reference for the Consul Service:
 
 <pre>
 kind: Service
@@ -384,7 +384,7 @@ Use <kubectl> to apply it:
 kubectl apply -f benignoservice.yaml
 </pre>
 
-
+sss
 ## Step 5: Kong for Kubernetes (K4K8S) Installation
 1. Install Kong for Kubernetes
 
