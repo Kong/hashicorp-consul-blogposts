@@ -269,9 +269,9 @@ http :8500/v1/catalog/service/benigno-v2-default | jq -r .[].ServiceAddress
 </pre>
 
 
-2. Create a new Consul Services
+2. Create the new Consul Service templates
 
-Using these templates, [primary](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/ben0.json) and [secondary](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/ben1.json), create declarations for the Consul Service with the Microservices addresses as primary and secondary.
+Using these templates, [primary](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/ben0.json) and [secondary](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/ben1.json), create declarations for the Consul Service with the Microservices addresses as primary and secondary. Notice that the new Consul Service is named as <b>benigno1</b>. That's the name the consumers of the service should use.
 
 <pre>
 ben0.json
@@ -305,9 +305,16 @@ ben1.json
 }
 </pre>
 
+Using these templates, [primary](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/ben0.json) and [secondary](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/ben1.json), create declarations for the Consul Service with the Microservices addresses as primary and secondary.
 
+
+3. Register the new Consul Service
+
+Registr the Consul Service using the Consul API:
+<pre>
 http put :8500/v1/agent/service/register < ben0.json
 http put :8500/v1/agent/service/register < ben1.json
+</pre>
 
 http :8500/v1/agent/services
 http :8500/v1/agent/service/ben0
