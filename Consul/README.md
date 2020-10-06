@@ -269,37 +269,41 @@ http :8500/v1/catalog/service/benigno-v2-default | jq -r .[].ServiceAddress
 </pre>
 
 
+2. Create a new Consul Services
 
+Using these templates, [primary](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/ben0.json) and [secondary](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/ben1.json), create declarations for the Consul Service with the Microservices addresses as primary and secondary.
 
+<pre>
 ben0.json
 {
   "ID": "ben0",
   "Name": "benigno1",
   "Tags": ["primary"],
-  "Address": "172.17.0.6",
+  "Address": "192.168.1.58",
   "Port": 5000,
   "weights": {
     "passing": 1,
     "warning": 1
   }
 }
+</pre>
 
+and
 
-
-
+<pre>
 ben1.json
 {
   "ID": "ben1",
   "Name": "benigno1",
   "Tags": ["secondary"],
-  "Address": "172.17.0.9",
+  "Address": "192.168.29.24",
   "Port": 5000,
   "weights": {
     "passing": 99,
     "warning": 1
   }
 }
-
+</pre>
 
 
 http put :8500/v1/agent/service/register < ben0.json

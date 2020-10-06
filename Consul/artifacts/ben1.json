@@ -1,0 +1,11 @@
+{
+  "ID": "ben1",
+  "Name": "benigno1",
+  "Tags": ["secondary"],
+  "Address": "172.17.0.4",
+  "Port": 5000,
+  "weights": {
+    "passing": 99,
+    "warning": 1
+  }
+}
