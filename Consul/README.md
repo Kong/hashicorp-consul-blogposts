@@ -136,6 +136,7 @@ kube-system   kube-dns               ClusterIP      10.100.0.10      <none>     
 </pre>
 
 3. Check the Microservice
+
 Open a terminal and expose the Benigno Service:
 <pre>
 kubectl port-forward service/benigno-v1 5000:5000
@@ -242,146 +243,28 @@ X-Consul-Lastcontact: 0
 
 5. Deploy the Canary Release
 
+Use the simliar declarations to deploy the Canary Release Microservice, [Canary Deployment](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/deployment_benigno_rc.yaml) and [Canary Service](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/service_benigno_rc.yaml)
+
+<pre>
 kubectl apply -f deployment_benigno_rc.yaml
 kubectl apply -f service_benigno_rc.yaml
-
-kubectl port-forward hashicorp-consul-server-0 8500:8500
-
-$ http :8500/v1/catalog/services
-HTTP/1.1 200 OK
-Content-Encoding: gzip
-Content-Length: 122
-Content-Type: application/json
-Date: Tue, 15 Sep 2020 15:05:51 GMT
-Vary: Accept-Encoding
-X-Consul-Effective-Consistency: leader
-X-Consul-Index: 294
-X-Consul-Knownleader: true
-X-Consul-Lastcontact: 0
-
-{
-    "benigno-v1-default": [
-        "k8s"
-    ],
-    "benigno-v2-default": [
-        "k8s"
-    ],
-    "consul": [],
-    "consul-consul-dns-hashicorp": [
-        "k8s"
-    ],
-    "consul-consul-server-hashicorp": [
-        "k8s"
-    ],
-    "kubernetes-default": [
-        "k8s"
-    ],
-    "magnanimo-default": [
-        "k8s"
-    ]
-}
+</pre>
 
 
-$ http :8500/v1/catalog/service/benigno-v1-default
-HTTP/1.1 200 OK
-Content-Encoding: gzip
-Content-Length: 334
-Content-Type: application/json
-Date: Tue, 15 Sep 2020 15:06:16 GMT
-Vary: Accept-Encoding
-X-Consul-Effective-Consistency: leader
-X-Consul-Index: 44
-X-Consul-Knownleader: true
-X-Consul-Lastcontact: 0
+6. Get the Consul Services addresses
 
-[
-    {
-        "Address": "127.0.0.1",
-        "CreateIndex": 44,
-        "Datacenter": "dc1",
-        "ID": "",
-        "ModifyIndex": 44,
-        "Node": "k8s-sync",
-        "NodeMeta": {
-            "external-source": "kubernetes"
-        },
-        "ServiceAddress": "172.17.0.6",
-        "ServiceConnect": {},
-        "ServiceEnableTagOverride": false,
-        "ServiceID": "benigno-v1-default-36cb73f45c0a",
-        "ServiceKind": "",
-        "ServiceMeta": {
-            "external-k8s-ns": "default",
-            "external-source": "kubernetes",
-            "port-http": "5000"
-        },
-        "ServiceName": "benigno-v1-default",
-        "ServicePort": 5000,
-        "ServiceProxy": {
-            "Expose": {},
-            "MeshGateway": {}
-        },
-        "ServiceTags": [
-            "k8s"
-        ],
-        "ServiceWeights": {
-            "Passing": 1,
-            "Warning": 1
-        },
-        "TaggedAddresses": null
-    }
-]
+Since, the two Microservices have been deployed, a new Consul Service, abstracting the two Microservices addresses, should be defined. The addresses can be obtained using the Consul APIs again:
+<pre>
+http :8500/v1/catalog/service/benigno-v1-default | jq -r .[].ServiceAddress
+192.168.1.58
+<pre>
 
+and
 
-$ http :8500/v1/catalog/service/benigno-v2-default
-HTTP/1.1 200 OK
-Content-Encoding: gzip
-Content-Length: 334
-Content-Type: application/json
-Date: Tue, 15 Sep 2020 15:06:40 GMT
-Vary: Accept-Encoding
-X-Consul-Effective-Consistency: leader
-X-Consul-Index: 294
-X-Consul-Knownleader: true
-X-Consul-Lastcontact: 0
-
-[
-    {
-        "Address": "127.0.0.1",
-        "CreateIndex": 294,
-        "Datacenter": "dc1",
-        "ID": "",
-        "ModifyIndex": 294,
-        "Node": "k8s-sync",
-        "NodeMeta": {
-            "external-source": "kubernetes"
-        },
-        "ServiceAddress": "172.17.0.9",
-        "ServiceConnect": {},
-        "ServiceEnableTagOverride": false,
-        "ServiceID": "benigno-v2-default-174c34d4f2ae",
-        "ServiceKind": "",
-        "ServiceMeta": {
-            "external-k8s-ns": "default",
-            "external-source": "kubernetes",
-            "port-http": "5000"
-        },
-        "ServiceName": "benigno-v2-default",
-        "ServicePort": 5000,
-        "ServiceProxy": {
-            "Expose": {},
-            "MeshGateway": {}
-        },
-        "ServiceTags": [
-            "k8s"
-        ],
-        "ServiceWeights": {
-            "Passing": 1,
-            "Warning": 1
-        },
-        "TaggedAddresses": null
-    }
-]
+<pre>
+http :8500/v1/catalog/service/benigno-v2-default | jq -r .[].ServiceAddress
+192.168.29.24
+</pre>
 
 
 
