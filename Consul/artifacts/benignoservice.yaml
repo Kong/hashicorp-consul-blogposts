@@ -1,0 +1,10 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: benigno1
+spec:
+  ports:
+  - protocol: TCP
+    port: 5000
+  type: ExternalName
+  externalName: benigno1.service.consul

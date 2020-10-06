@@ -23,4 +23,4 @@ server:
 
 # Sync Kubernetes and Consul services
 syncCatalog:
-  enabled: true
+  enabled: false

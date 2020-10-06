@@ -53,7 +53,7 @@ server:
 
 # Sync Kubernetes and Consul services
 syncCatalog:
-  enabled: true
+  enabled: false
 </pre>
 
 3. Create a Namespace for Consul
@@ -70,25 +70,23 @@ helm install consul-connect -n hashicorp hashicorp/consul -f consul-values.yml
 
 <pre>
 $ kubectl get pod --all-namespaces
-NAMESPACE     NAME                                          READY   STATUS    RESTARTS   AGE
-hashicorp     consul-consul-server-0                        1/1     Running   0          3m10s
-hashicorp     consul-consul-sync-catalog-7f7fb45954-zfj96   1/1     Running   0          3m11s
-hashicorp     consul-consul-znr6t                           1/1     Running   0          3m11s
-kube-system   aws-node-wf2rj                                1/1     Running   0          21m
-kube-system   coredns-5946c5d67c-5cvlk                      1/1     Running   0          28m
-kube-system   coredns-5946c5d67c-hq7pf                      1/1     Running   0          28m
-kube-system   kube-proxy-5pv5g                              1/1     Running   0          21m
+NAMESPACE     NAME                             READY   STATUS    RESTARTS   AGE
+hashicorp     consul-connect-consul-ng48h      1/1     Running   0          69s
+hashicorp     consul-connect-consul-server-0   1/1     Running   0          69s
+kube-system   aws-node-4zshh                   1/1     Running   0          2m47s
+kube-system   coredns-74df49b88b-8qqh6         1/1     Running   0          9m22s
+kube-system   coredns-74df49b88b-9r9qq         1/1     Running   0          9m22s
+kube-system   kube-proxy-gkp95                 1/1     Running   0          2m47s
 </pre>
 
 <pre>
 $ kubectl get service --all-namespaces
-NAMESPACE     NAME                   TYPE           CLUSTER-IP       EXTERNAL-IP                                                              PORT(S)                                                                   AGE
-default       kubernetes             ClusterIP      10.100.0.1       <none>                                                                   443/TCP                                                                   31m
-hashicorp     consul                 ExternalName   <none>           consul.service.consul                                                    <none>                                                                    4m44s
-hashicorp     consul-consul-dns      ClusterIP      10.100.245.135   <none>                                                                   53/TCP,53/UDP                                                             5m25s
-hashicorp     consul-consul-server   ClusterIP      None             <none>                                                                   8500/TCP,8301/TCP,8301/UDP,8302/TCP,8302/UDP,8300/TCP,8600/TCP,8600/UDP   5m25s
-hashicorp     consul-consul-ui       LoadBalancer   10.100.76.229    a8c100f0db5ad4fa69037c942e8b6391-594908802.us-west-2.elb.amazonaws.com   80:32109/TCP                                                              5m25s
-kube-system   kube-dns               ClusterIP      10.100.0.10      <none>                                                                   53/UDP,53/TCP                                                             31m
+NAMESPACE     NAME                           TYPE           CLUSTER-IP       EXTERNAL-IP                                                              PORT(S)                                                                   AGE
+default       kubernetes                     ClusterIP      10.100.0.1       <none>                                                                   443/TCP                                                                   9m46s
+hashicorp     consul-connect-consul-dns      ClusterIP      10.100.152.144   <none>                                                                   53/TCP,53/UDP                                                             83s
+hashicorp     consul-connect-consul-server   ClusterIP      None             <none>                                                                   8500/TCP,8301/TCP,8301/UDP,8302/TCP,8302/UDP,8300/TCP,8600/TCP,8600/UDP   83s
+hashicorp     consul-connect-consul-ui       LoadBalancer   10.100.27.89     a45764982a377466888a55b42b6dd752-268952251.us-west-1.elb.amazonaws.com   80:30979/TCP                                                              83s
+kube-system   kube-dns                       ClusterIP      10.100.0.10      <none>                                                                   53/UDP,53/TCP                                                             9m43s
 </pre>
 
 Check the Consul Connect services redirecting your browser to Consul UI:
@@ -97,12 +95,12 @@ Check the Consul Connect services redirecting your browser to Consul UI:
 
 ## Step 4: Configure Consul DNS
 <pre>
-$ kubectl get service consul-consul-dns -n hashicorp -o jsonpath='{.spec.clusterIP}'
+kubectl get service consul-consul-dns -n hashicorp -o jsonpath='{.spec.clusterIP}'
 10.100.245.135
 </pre>
 
 <pre>
-$ kubectl edit configmap coredns -n kube-system
+kubectl edit configmap coredns -n kube-system
 # Please edit the object below. Lines beginning with a '#' will be ignored,
 # and an empty file will abort the edit. If an error occurs while saving this file will be
 # reopened with the relevant failures.
@@ -219,6 +217,8 @@ Hello World, Benigno
 
 Since we have set the synchronization between Kubernetes and Consul services we should be able Benigno already registered
 <pre>
+kubectl port-forward service/consul-connect-consul-server -n hashicorp 8500:8500
+
 $ http :8500/v1/catalog/services
 HTTP/1.1 200 OK
 Content-Encoding: gzip
@@ -339,10 +339,10 @@ ben0.json
   "ID": "ben0",
   "Name": "benigno1",
   "Tags": ["primary"],
-  "Address": "192.168.26.61",
+  "Address": "10.99.24.40",
   "Port": 5000,
   "weights": {
-    "passing": 1,
+    "passing": 80,
     "warning": 1
   }
 }
@@ -356,10 +356,10 @@ ben1.json
   "ID": "ben1",
   "Name": "benigno1",
   "Tags": ["secondary"],
-  "Address": "192.168.29.24",
+  "Address": "10.103.201.61",
   "Port": 5000,
   "weights": {
-    "passing": 99,
+    "passing": 20,
     "warning": 1
   }
 }
@@ -486,6 +486,8 @@ kubectl create namespace kong
 Install Kong for Kubernetes with <b>Helm</b>
 <pre>
 helm install kong kong/kong -n kong --set ingressController.installCRDs=false
+helm install kong kong/kong -n kong --set ingressController.installCRDs=false --set ingressController.image.tag=0.9.1 --set kong.image.tag=2.0
+helm install kong kong/kong -n kong --set ingressController.installCRDs=false --set ingressController.image.tag=0.9.1
 </pre>
 
 2. Check the installation
@@ -548,7 +550,7 @@ The return message is coming from Kong for Kubernetes, saying there's no API def
 
 Open a terminal inside K4K8S pod to run check the <b>benigno1</b> naming resolution with a simple <nslookup> command:
 <pre>
-$ kubectl exec -ti kong-kong-6f784b6686-szd6v -n kong -- /bin/sh
+kubectl exec -ti kong-kong-6f784b6686-szd6v -n kong -- /bin/sh
 Defaulting container name to ingress-controller.
 Use 'kubectl describe pod/kong-kong-6f784b6686-szd6v -n kong' to see all of the containers in this pod.
 / $ nslookup benigno1.service.consul
@@ -578,6 +580,7 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: kong
     konghq.com/strip-path: "true"
+    configuration.konghq.com: do-not-preserve-host
 spec:
   rules:
   - http:

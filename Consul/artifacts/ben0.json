@@ -2,10 +2,10 @@
   "ID": "ben0",
   "Name": "benigno1",
   "Tags": ["primary"],
-  "Address": "172.17.0.6",
+  "Address": "10.103.54.213",
   "Port": 5000,
   "weights": {
-    "passing": 1,
+    "passing": 80,
     "warning": 1
   }
 }
