@@ -99,9 +99,9 @@ Check the Consul Connect services redirecting your browser to Consul UI:
 
 Canary description
 
-1. Deploy Benigno and Canary Microservices
+1. Deploy Sample Microservice
 
-Use the following declarations to deploy both microservices, [Web](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/ConsulConnect/artifacts/web.yml) and [API](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/ConsulConnect/artifacts/web.yml)
+Use the following declarations to deploy both microservices, [Sample Deployment](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/deployment_benigno_v1.yaml) and [Sample Service](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/service_benigno.yaml)
 
 After the deployment you should see the new Kubernetes Pods as well as the new Consul Connect Services.
 <pre>
