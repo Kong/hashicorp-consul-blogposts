@@ -251,13 +251,15 @@ kubectl apply -f service_benigno_rc.yaml
 </pre>
 
 
-6. Get the Consul Services addresses
+## Step 3: Register the Consul Service for both Microservices releases
+
+1. Get the Consul Services addresses
 
 Since, the two Microservices have been deployed, a new Consul Service, abstracting the two Microservices addresses, should be defined. The addresses can be obtained using the Consul APIs again:
 <pre>
 http :8500/v1/catalog/service/benigno-v1-default | jq -r .[].ServiceAddress
 192.168.1.58
-<pre>
+</pre>
 
 and
 
