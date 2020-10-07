@@ -260,9 +260,8 @@ cert.key: Server Private Key
 
 
 
-## Step 5: Define Kong Service and Route
+## Step 5: Insert Digital Certificates and Private Key in Kong
 
-1. Insert the Digital Certificates and Private Key in Kong:
 <pre>
 $ curl -sX POST http://abc541cc57000442cba78705b2e897cd-1988459246.us-west-2.elb.amazonaws.com:8001/ca_certificates -F "cert=@./ca.crt"
 
@@ -270,6 +269,10 @@ $ curl -sX POST http://abc541cc57000442cba78705b2e897cd-1988459246.us-west-2.elb
     -F "cert=@./cert.pem" \
     -F "key=@./cert.key"
 </pre>
+
+
+
+## Step 6: Define Kong Service and Route
 
 2. Create a Kong Service based on the Sidecar
 Get the Client Certificate Id:
