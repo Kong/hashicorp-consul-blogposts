@@ -5,6 +5,9 @@ Consul Connect is one of the main Service Mesh implementations in the marketplac
 The following picture describes the Kong and Consul Connect Service Mesh architecture.
 ![Architecture|200x100](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/ConsulConnect/artifacts/architecture.png)
 
+<img src="https://github.com/Kong/hashicorp-consul-blogposts/blob/main/ConsulConnect/artifacts/architecture.png" width="200" />
+
+
 
 #  System Requirements
 
