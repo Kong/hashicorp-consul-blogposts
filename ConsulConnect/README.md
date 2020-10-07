@@ -263,7 +263,8 @@ cert.key: Server Private Key
 ## Step 5: Insert Digital Certificates and Private Key in Kong
 
 <pre>
-$ curl -sX POST http://abc541cc57000442cba78705b2e897cd-1988459246.us-west-2.elb.amazonaws.com:8001/ca_certificates -F "cert=@./ca.crt"
+$ curl -sX POST http://abc541cc57000442cba78705b2e897cd-1988459246.us-west-2.elb.amazonaws.com:8001/ca_certificates \
+    -F "cert=@./ca.crt"
 
 $ curl -sX POST http://abc541cc57000442cba78705b2e897cd-1988459246.us-west-2.elb.amazonaws.com:8001/certificates \
     -F "cert=@./cert.pem" \
