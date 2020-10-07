@@ -4,7 +4,7 @@ From Kong API Gateway perspective, using Consul as its Service Discovery infrast
 
 Kong for Kubernetes can implement all sort of policies to protect the Ingresses defined to expose Kubernetes services to external Consumers including Rate Limiting, API Keys, OAuth/OIDC grants, etc.
 
-The following picture describes the Ingress Gateway, Ingress Controller and Service Mesh architecture.
+The following picture describes the Kong for Kubernetes Ingress Controller and Consul Service Discovery implementing a Canary Release:
 <img src="https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/architecture.png" width="800" />
 
 
