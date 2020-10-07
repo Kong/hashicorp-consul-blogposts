@@ -385,7 +385,7 @@ spec:
 
 Use <b>kubectl</b> to apply it:
 <pre>
-kubectl apply -f benignoservice.yaml
+kubectl apply -f externalservice_benigno.yaml
 </pre>
 
 
