@@ -1,4 +1,4 @@
-# Consul Service Discovery and <p> Kong for Kubernetes
+# Vault and Kong for Kubernetes
 
 From Kong API Gateway perspective, using Consul as its Service Discovery infrastructure is one of the most well-known and common integration use cases. This exercise shows how to integrate Kong for Kubernetes (K4K8S), the Kong Ingress Controller based on the Kong API Gateway, with Consul Service Discovery running on an Kubernetes EKS Cluster.
 
