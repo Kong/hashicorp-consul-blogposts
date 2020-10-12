@@ -5,7 +5,7 @@ From Kong API Gateway perspective, using Consul as its Service Discovery infrast
 Kong for Kubernetes can implement all sort of policies to protect the Ingresses defined to expose Kubernetes services to external Consumers including Rate Limiting, API Keys, OAuth/OIDC grants, etc.
 
 The following picture describes the Kong for Kubernetes Ingress Controller and Consul Service Discovery implementing a Canary Release:
-<img src="https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/architecture.png" width="800" />
+<img src="https://github.com/Kong/hashicorp-consul-blogposts/blob/main/artifacts/architecture.png" width="800" />
 
 
 #  System Requirements
@@ -27,7 +27,7 @@ The following picture describes the Kong for Kubernetes Ingress Controller and C
 helm repo add hashicorp https://helm.releases.hashicorp.com
 </pre>
 
-2. Use the following [YAML file](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/consul-values.yml) to install Consul. Notice we are setting synchronization between Kubernetes and Consul services.
+2. Use the following [YAML file](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/artifacts/consul-values.yml) to install Consul. Notice we are setting synchronization between Kubernetes and Consul services.
 
 <pre>
 global:
@@ -92,7 +92,7 @@ kube-system   kube-dns                       ClusterIP      10.100.0.10      <no
 </pre>
 
 Check the Consul Connect services redirecting your browser to Consul UI:
-![ConsulConnect](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/ConsulConnect.png)
+![ConsulConnect](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/artifacts/ConsulConnect.png)
 
 
 ## Step 2: Configure Consul DNS
@@ -161,7 +161,7 @@ Canary description
 
 1. Deploy Sample Microservice
 
-Use the following declarations to deploy the Sample Microservice, [Sample Deployment](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/deployment_benigno_v1.yaml) and [Sample Service](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/service_benigno.yaml)
+Use the following declarations to deploy the Sample Microservice, [Sample Deployment](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/artifacts/deployment_benigno_v1.yaml) and [Sample Service](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/artifacts/service_benigno.yaml)
 
 After the deployment you should see the new Kubernetes Pods as well as the new Consul Services.
 <pre>
@@ -216,7 +216,7 @@ Hello World, Benigno
 
 4. Deploy the Canary Release
 
-Use the simliar declarations to deploy the Canary Release Microservice, [Canary Deployment](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/deployment_benigno_rc.yaml) and [Canary Service](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/service_benigno_rc.yaml)
+Use the simliar declarations to deploy the Canary Release Microservice, [Canary Deployment](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/artifacts/deployment_benigno_rc.yaml) and [Canary Service](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/artifacts/service_benigno_rc.yaml)
 
 <pre>
 kubectl apply -f deployment_benigno_rc.yaml
@@ -244,7 +244,7 @@ kube-system   kube-dns                       ClusterIP      10.100.0.10      <no
 
 2. Create the new Consul Service templates
 
-Using these templates, [primary](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/ben0.json) and [secondary](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/ben1.json), create declarations for the Consul Service with the Microservices addresses as primary and secondary. Notice that the new Consul Service is named as <b>benigno1</b>. That's the name the consumers of the service should use. Moreover, the declarations are defining load balancing weights for primary and secondary IPs.
+Using these templates, [primary](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/artifacts/ben0.json) and [secondary](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/artifacts/ben1.json), create declarations for the Consul Service with the Microservices addresses as primary and secondary. Notice that the new Consul Service is named as <b>benigno1</b>. That's the name the consumers of the service should use. Moreover, the declarations are defining load balancing weights for primary and secondary IPs.
 
 <pre>
 ben0.json
@@ -370,7 +370,7 @@ X-Consul-Reason: passing
 
 4. Register the Kubernetes Service
 
-The Kubernetes [service](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/externalservice_benigno.yaml) defines an internal reference for the Consul Service:
+The Kubernetes [service](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/artifacts/externalservice_benigno.yaml) defines an internal reference for the Consul Service:
 
 <pre>
 kind: Service
@@ -487,7 +487,7 @@ Address: 10.100.114.214
 
 ## Step 6: Define Kong Ingress
 
-1. Create an Ingress using this [declaration](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/Consul/artifacts/benignoroute.yaml). Notice it refers to the External Service created previously:
+1. Create an Ingress using this [declaration](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/artifacts/benignoroute.yaml). Notice it refers to the External Service created previously:
 <pre>
 apiVersion: extensions/v1beta1
 kind: Ingress
