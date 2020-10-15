@@ -55,7 +55,8 @@ server:
 
 # Sync Kubernetes and Consul services
 syncCatalog:
-  enabled: false
+  enabled: true
+  toConsul: false
 </pre>
 
 3. Create a Namespace for Consul
