@@ -27,7 +27,7 @@ The following picture describes the Kong for Kubernetes Ingress Controller and C
 helm repo add hashicorp https://helm.releases.hashicorp.com
 </pre>
 
-2. Use the following [YAML file](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/artifacts/consul-values.yml) to install Consul. Notice we are setting synchronization between Kubernetes and Consul services.
+2. Use the following [YAML file](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/artifacts/consul-values.yml) to install Consul. Notice the Kubernetes and Consul synchronization settings: it says that Consul services should be automatically defined as Kubernetes Services as well. This is particularly important to expose Consul services to other Kubernetes deployments.
 
 <pre>
 global:
@@ -73,23 +73,25 @@ helm install consul-connect -n hashicorp hashicorp/consul -f consul-values.yml
 
 <pre>
 $ kubectl get pod --all-namespaces
-NAMESPACE     NAME                             READY   STATUS    RESTARTS   AGE
-hashicorp     consul-connect-consul-ng48h      1/1     Running   0          69s
-hashicorp     consul-connect-consul-server-0   1/1     Running   0          69s
-kube-system   aws-node-4zshh                   1/1     Running   0          2m47s
-kube-system   coredns-74df49b88b-8qqh6         1/1     Running   0          9m22s
-kube-system   coredns-74df49b88b-9r9qq         1/1     Running   0          9m22s
-kube-system   kube-proxy-gkp95                 1/1     Running   0          2m47s
+NAMESPACE     NAME                                                  READY   STATUS    RESTARTS   AGE
+hashicorp     consul-connect-consul-98wjp                           1/1     Running   0          110s
+hashicorp     consul-connect-consul-server-0                        1/1     Running   0          110s
+hashicorp     consul-connect-consul-sync-catalog-56fc897759-7b4g2   1/1     Running   0          110s
+kube-system   aws-node-d768b                                        1/1     Running   0          4m4s
+kube-system   coredns-74df49b88b-958th                              1/1     Running   0          10m
+kube-system   coredns-74df49b88b-zhnmp                              1/1     Running   0          10m
+kube-system   kube-proxy-b4n6v                                      1/1     Running   0          4m4s
 </pre>
 
 <pre>
 $ kubectl get service --all-namespaces
-NAMESPACE     NAME                           TYPE           CLUSTER-IP       EXTERNAL-IP                                                              PORT(S)                                                                   AGE
-default       kubernetes                     ClusterIP      10.100.0.1       <none>                                                                   443/TCP                                                                   9m46s
-hashicorp     consul-connect-consul-dns      ClusterIP      10.100.152.144   <none>                                                                   53/TCP,53/UDP                                                             83s
-hashicorp     consul-connect-consul-server   ClusterIP      None             <none>                                                                   8500/TCP,8301/TCP,8301/UDP,8302/TCP,8302/UDP,8300/TCP,8600/TCP,8600/UDP   83s
-hashicorp     consul-connect-consul-ui       LoadBalancer   10.100.27.89     a45764982a377466888a55b42b6dd752-268952251.us-west-1.elb.amazonaws.com   80:30979/TCP                                                              83s
-kube-system   kube-dns                       ClusterIP      10.100.0.10      <none>                                                                   53/UDP,53/TCP                                                             9m43s
+NAMESPACE     NAME                           TYPE           CLUSTER-IP      EXTERNAL-IP                                                              PORT(S)                                                                   AGE
+default       kubernetes                     ClusterIP      10.100.0.1      <none>                                                                   443/TCP                                                                   10m
+hashicorp     consul                         ExternalName   <none>          consul.service.consul                                                    <none>                                                                    91s
+hashicorp     consul-connect-consul-dns      ClusterIP      10.100.21.189   <none>                                                                   53/TCP,53/UDP                                                             2m15s
+hashicorp     consul-connect-consul-server   ClusterIP      None            <none>                                                                   8500/TCP,8301/TCP,8301/UDP,8302/TCP,8302/UDP,8300/TCP,8600/TCP,8600/UDP   2m15s
+hashicorp     consul-connect-consul-ui       LoadBalancer   10.100.232.13   a59d72771132e4f4cb9418854d722fdb-687417024.us-west-1.elb.amazonaws.com   80:30573/TCP                                                              2m15s
+kube-system   kube-dns                       ClusterIP      10.100.0.10     <none>                                                                   53/UDP,53/TCP                                                             10m
 </pre>
 
 Check the Consul Connect services redirecting your browser to Consul UI:
