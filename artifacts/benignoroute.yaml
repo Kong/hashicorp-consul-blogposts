@@ -2,6 +2,7 @@ apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   name: benignoroute
+  namespace: hashicorp
   annotations:
     kubernetes.io/ingress.class: kong
     konghq.com/strip-path: "true"
