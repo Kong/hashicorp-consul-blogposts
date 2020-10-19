@@ -27,7 +27,7 @@ The following picture describes the Kong for Kubernetes Ingress Controller and C
 helm repo add hashicorp https://helm.releases.hashicorp.com
 </pre>
 
-2. Use the following [YAML file](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/artifacts/consul-values.yml) to install Consul. Notice the Kubernetes and Consul synchronization settings: it says that Consul services should be automatically defined as Kubernetes Services as well. This is particularly important to expose Consul services to other Kubernetes deployments.
+2. Use the following [YAML file](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/artifacts/consul-values.yml) to install Consul.
 
 <pre>
 global:
@@ -55,8 +55,7 @@ server:
 
 # Sync Kubernetes and Consul services
 syncCatalog:
-  enabled: true
-  toConsul: false
+  enabled: false
 </pre>
 
 3. Create a Namespace for Consul
@@ -76,7 +75,6 @@ $ kubectl get pod --all-namespaces
 NAMESPACE     NAME                                                  READY   STATUS    RESTARTS   AGE
 hashicorp     consul-connect-consul-98wjp                           1/1     Running   0          110s
 hashicorp     consul-connect-consul-server-0                        1/1     Running   0          110s
-hashicorp     consul-connect-consul-sync-catalog-56fc897759-7b4g2   1/1     Running   0          110s
 kube-system   aws-node-d768b                                        1/1     Running   0          4m4s
 kube-system   coredns-74df49b88b-958th                              1/1     Running   0          10m
 kube-system   coredns-74df49b88b-zhnmp                              1/1     Running   0          10m
@@ -179,7 +177,6 @@ NAMESPACE     NAME                                                  READY   STAT
 default       benigno-v1-fd4567d95-qj6tn                            1/1     Running   0          27s
 hashicorp     consul-connect-consul-98wjp                           1/1     Running   0          8m30s
 hashicorp     consul-connect-consul-server-0                        1/1     Running   0          8m30s
-hashicorp     consul-connect-consul-sync-catalog-56fc897759-7b4g2   1/1     Running   0          8m30s
 kube-system   aws-node-d768b                                        1/1     Running   0          10m
 kube-system   coredns-74df49b88b-958th                              1/1     Running   0          16m
 kube-system   coredns-74df49b88b-zhnmp                              1/1     Running   0          16m
@@ -423,7 +420,6 @@ default       benigno-v1-fd4567d95-qj6tn                            1/1     Runn
 default       benigno-v2-b977c867b-5qlhd                            1/1     Running   0          8m53s
 hashicorp     consul-connect-consul-98wjp                           1/1     Running   0          18m
 hashicorp     consul-connect-consul-server-0                        1/1     Running   0          18m
-hashicorp     consul-connect-consul-sync-catalog-56fc897759-7b4g2   1/1     Running   0          18m
 kong          kong-kong-7989d79446-2f7wg                            2/2     Running   0          27s
 kube-system   aws-node-d768b                                        1/1     Running   0          21m
 kube-system   coredns-74df49b88b-958th                              1/1     Running   0          27m
@@ -481,11 +477,11 @@ Use 'kubectl describe pod/kong-kong-7989d79446-2f7wg -n kong' to see all of the 
 Server:		10.100.0.10
 Address:	10.100.0.10:53
 
+Name:	benigno1.service.consul
+Address: 10.100.245.208
+Name:	benigno1.service.consul
+Address: 10.100.164.109
 
-Name:	benigno1.service.consul
-Address: 172.17.0.5
-Name:	benigno1.service.consul
-Address: 172.17.0.4
 
 / $ exit
 </pre>
