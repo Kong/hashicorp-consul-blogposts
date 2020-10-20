@@ -550,7 +550,7 @@ Thank you for your interest in contributing! Please submit issues [here](https:/
 
 ### Support
 - HashiCorp Support: https://support.hashicorp.com
-- Kong Support: https://support.konghq.com/
+- Kong Support: https://support.konghq.com
 
 ### License
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
