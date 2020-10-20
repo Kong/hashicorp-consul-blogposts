@@ -1,14 +1,25 @@
-# Consul Service Discovery and <p> Kong for Kubernetes
+## Consul Service Discovery with Kong Ingress Controller on Kubernetes
 
+### Table of Contents
+- [Overview](#overview)
+- [Architectture](#architecture)
+- [System Requirements](#system-requirements)
+- [Installation](#installation)
+- [Contributing](#contributing)
+- [Support](#support)
+- [License](#license)
+
+### Overview
 From Kong API Gateway perspective, using Consul as its Service Discovery infrastructure is one of the most well-known and common integration use cases. This exercise shows how to integrate Kong for Kubernetes (K4K8S), the Kong Ingress Controller based on the Kong API Gateway, with Consul Service Discovery running on an Kubernetes EKS Cluster.
 
 Kong for Kubernetes can implement all sort of policies to protect the Ingresses defined to expose Kubernetes services to external Consumers including Rate Limiting, API Keys, OAuth/OIDC grants, etc.
 
-The following picture describes the Kong for Kubernetes Ingress Controller and Consul Service Discovery implementing a Canary Release:
-<img src="https://github.com/Kong/hashicorp-consul-blogposts/blob/main/artifacts/architecture.png" width="800" />
+### Architecture
+The following diagra describes the Kong for Kubernetes Ingress Controller and Consul Service Discovery implementing a Canary Release:
 
+![Integration Architecture](artifacts/architecture.png "Integration Architecture")
 
-#  System Requirements
+### System Requirements
 
 - A Kubernetes Cluster. This exercise was done on an AWS EKS Cluster. Both Consul Connect and Kong Enterprise support any Kubernetes distribution.
 - kubectl
@@ -17,9 +28,9 @@ The following picture describes the Kong for Kubernetes Ingress Controller and C
 - HTTPie and Curl.
 
 
-#  Installation Process
+### Installation
 
-## Step 1: Consul Installation
+#### Step 1: Consul Installation
 
 1. Add HashiCorp repo to your local Helm installation.
 
@@ -27,7 +38,7 @@ The following picture describes the Kong for Kubernetes Ingress Controller and C
 helm repo add hashicorp https://helm.releases.hashicorp.com
 </pre>
 
-2. Use the following [YAML file](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/artifacts/consul-values.yml) to install Consul.
+2. Use the following [YAML file](artifacts/consul-values.yml) to install Consul.
 
 <pre>
 global:
@@ -92,10 +103,10 @@ kube-system   kube-dns               ClusterIP      10.100.0.10      <none>     
 </pre>
 
 Check the Consul Connect services redirecting your browser to Consul UI:
-![ConsulConnect](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/artifacts/ConsulConnect.png)
+![ConsulConnect](artifacts/ConsulConnect.png)
 
 
-## Step 2: Configure Consul DNS
+#### Step 2: Configure Consul DNS
 <pre>
 kubectl get service consul-consul-dns -n hashicorp -o jsonpath='{.spec.clusterIP}'
 10.100.55.251
@@ -155,13 +166,13 @@ metadata:
 
 
 
-## Step 3: Deploy Sample Microservice and Canary
+#### Step 3: Deploy Sample Microservice and Canary
 
 Canary description
 
 1. Deploy Sample Microservice
 
-Use the following declarations to deploy the Sample Microservice, [Sample Deployment](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/artifacts/deployment_benigno_v1.yaml) and [Sample Service](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/artifacts/service_benigno.yaml)
+Use the following declarations to deploy the Sample Microservice, [Sample Deployment](artifacts/deployment_benigno_v1.yaml) and [Sample Service](artifacts/service_benigno.yaml)
 
 After the deployment you should see the new Kubernetes Pods as well as the new Consul Services.
 <pre>
@@ -216,7 +227,7 @@ Hello World, Benigno
 
 4. Deploy the Canary Release
 
-Use the simliar declarations to deploy the Canary Release Microservice, [Canary Deployment](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/artifacts/deployment_benigno_rc.yaml) and [Canary Service](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/artifacts/service_benigno_rc.yaml)
+Use the simliar declarations to deploy the Canary Release Microservice, [Canary Deployment](artifacts/deployment_benigno_rc.yaml) and [Canary Service](artifacts/service_benigno_rc.yaml)
 
 <pre>
 kubectl apply -f deployment_benigno_rc.yaml
@@ -224,7 +235,7 @@ kubectl apply -f service_benigno_rc.yaml
 </pre>
 
 
-## Step 4: Register the Consul Service for both Microservices releases
+#### Step 4: Register the Consul Service for both Microservices releases
 
 1. Get the Microservices Services ClusterIP addresses
 
@@ -244,7 +255,7 @@ kube-system   kube-dns               ClusterIP      10.100.0.10      <none>     
 
 2. Create the new Consul Service templates
 
-Using these templates, [primary](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/artifacts/ben0.json) and [secondary](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/artifacts/ben1.json), create declarations for the Consul Service with the Microservices addresses as primary and secondary. Notice that the new Consul Service is named as <b>benigno1</b>. That's the name the consumers of the service should use. Moreover, the declarations are defining load balancing weights for primary and secondary IPs.
+Using these templates, [primary](artifacts/ben0.json) and [secondary](artifacts/ben1.json), create declarations for the Consul Service with the Microservices addresses as primary and secondary. Notice that the new Consul Service is named as <b>benigno1</b>. That's the name the consumers of the service should use. Moreover, the declarations are defining load balancing weights for primary and secondary IPs.
 
 <pre>
 ben0.json
@@ -370,7 +381,7 @@ X-Consul-Reason: passing
 
 4. Register the Kubernetes Service
 
-The Kubernetes [service](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/artifacts/externalservice_benigno.yaml) defines an internal reference for the Consul Service:
+The Kubernetes [service](artifacts/externalservice_benigno.yaml) defines an internal reference for the Consul Service:
 
 <pre>
 kind: Service
@@ -392,7 +403,7 @@ kubectl apply -f externalservice_benigno.yaml
 </pre>
 
 
-## Step 5: Kong for Kubernetes (K4K8S) Installation
+#### Step 5: Kong for Kubernetes (K4K8S) Installation
 1. Install Kong for Kubernetes
 
 Add Kong Repository:
@@ -486,9 +497,9 @@ Address: 10.100.148.236
 
 
 
-## Step 6: Define Kong Ingress
+#### Step 6: Define Kong Ingress
 
-1. Create an Ingress using this [declaration](https://github.com/Kong/hashicorp-consul-blogposts/blob/main/artifacts/benignoroute.yaml). Notice it refers to the External Service created previously:
+1. Create an Ingress using this [declaration](artifacts/benignoroute.yaml). Notice it refers to the External Service created previously:
 <pre>
 apiVersion: extensions/v1beta1
 kind: Ingress
@@ -533,3 +544,13 @@ Hello World, Benigno, Canary Release
 Run a loop if you want to see the Canary in action
 
 while [ 1 ]; do curl http://a8d220af2afef4dbab34d2e277cdcae8-944163116.us-west-1.elb.amazonaws.com/benignoroute; sleep 1; echo; done
+
+### Contributing
+Thank you for your interest in contributing! Please submit issues [here](https://github.com/Kong/hashicorp-consul-blogposts/issues/new) for revisions.
+
+### Support
+- HashiCorp Support: https://support.hashicorp.com
+- Kong Support: https://support.konghq.com/
+
+### License
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
