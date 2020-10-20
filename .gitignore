@@ -1,0 +1,30 @@
+# Module directory in any sub-folder
+**/.terraform
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+*.tfstate.lock.info
+
+# .tfvars files
+*.tfvars
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.vagrant
+
+# Ignored Terraform files
+*gitignore*.tf
+
+# SSH Keys
+*.pem
+
+# Generated private key
+*.key
