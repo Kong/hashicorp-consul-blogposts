@@ -543,7 +543,9 @@ Hello World, Benigno, Canary Release
 
 Run a loop if you want to see the Canary in action
 
+<pre>
 while [ 1 ]; do curl http://a8d220af2afef4dbab34d2e277cdcae8-944163116.us-west-1.elb.amazonaws.com/benignoroute; sleep 1; echo; done
+</pre>
 
 ### Contributing
 Thank you for your interest in contributing! Please submit issues [here](https://github.com/Kong/hashicorp-consul-blogposts/issues/new) for revisions.
