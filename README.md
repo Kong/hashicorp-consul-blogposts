@@ -2,7 +2,7 @@
 
 ### Table of Contents
 - [Overview](#overview)
-- [Architectture](#architecture)
+- [Architecture](#architecture)
 - [System Requirements](#system-requirements)
 - [Installation](#installation)
 - [Contributing](#contributing)
@@ -10,12 +10,12 @@
 - [License](#license)
 
 ### Overview
-From Kong API Gateway perspective, using Consul as its Service Discovery infrastructure is one of the most well-known and common integration use cases. This exercise shows how to integrate Kong for Kubernetes (K4K8S), the Kong Ingress Controller based on the Kong API Gateway, with Consul Service Discovery running on an Kubernetes EKS Cluster.
+From Kong API Gateway perspective, using Consul as its Service Discovery infrastructure is one of the most well-known and common integration use cases. This exercise shows how to integrate Kong for Kubernetes (K4K8S), the Kong Ingress Controller based on the Kong API Gateway, with Consul Service Discovery running on a Kubernetes EKS Cluster.
 
 Kong for Kubernetes can implement all sort of policies to protect the Ingresses defined to expose Kubernetes services to external Consumers including Rate Limiting, API Keys, OAuth/OIDC grants, etc.
 
 ### Architecture
-The following diagra describes the Kong for Kubernetes Ingress Controller and Consul Service Discovery implementing a Canary Release:
+The following diagram describes the Kong for Kubernetes Ingress Controller and Consul Service Discovery implementing a Canary Release:
 
 ![Integration Architecture](artifacts/architecture.png "Integration Architecture")
 
